@@ -6,64 +6,73 @@ import * as Yup from 'yup'
 import { IconApple, IconGoogle, IconWhatsapp } from '../../../assets/icons'
 import { BackgroundLogin } from '../../../assets/images'
 import { PetsLoveLogo } from '../../../assets/logos'
-import { BaseButton } from '../../../components/common/BaseButton'
-import { BaseInput } from '../../../components/common/BaseInput'
 import { BaseLoading } from '../../../components/common/BaseLoading'
 import { signInWithGoogle, isFirebaseConfigured } from '../../../config/firebase'
 
 export const LoginGoogle: FC = () => {
-  const [successEmailLogin, setSuccessEmailLogin] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [isSignup, setIsSignup] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const urlParams = new URLSearchParams(window.location.search)
   const token = urlParams.get('token')
   const { t } = useTranslation(['common', 'login'])
 
   useEffect(() => {
-    setSuccessEmailLogin(false)
     if (token) {
-      setLoading(true)
       document.cookie = `token=${token}; path=/`
-      window.location.href = '/dashboard'
+      window.location.href = '/discover'
     }
-    setTimeout(() => setLoading(false), 500)
   }, [token])
 
-  const loginSchema = Yup.object().shape({
+  const validationSchema = Yup.object().shape({
     email: Yup.string()
-      .email(t('common:emailInvalid'))
-      .required(t('common:requiredField')),
+      .email('Please enter a valid email')
+      .required('Email is required'),
+    password: Yup.string()
+      .min(6, 'Password must be at least 6 characters')
+      .required('Password is required'),
+    confirmPassword: isSignup
+      ? Yup.string()
+          .oneOf([Yup.ref('password')], 'Passwords must match')
+          .required('Please confirm your password')
+      : Yup.string(),
   })
 
   const formik = useFormik({
-    validationSchema: loginSchema,
     initialValues: {
       email: '',
+      password: '',
+      confirmPassword: '',
     },
+    validationSchema,
     onSubmit: async (values) => {
-      handleDemoLogin(values.email)
-      formik.resetForm()
+      setError('')
+      setSuccess('')
+      setLoading(true)
+
+      // Demo mode - simulate signup/login
+      setTimeout(() => {
+        const demoToken = 'demo_token_' + Date.now()
+        document.cookie = `token=${demoToken}; path=/`
+        localStorage.setItem('demo_email', values.email)
+        setSuccess(isSignup ? 'Account created!' : 'Logged in!')
+        setTimeout(() => {
+          window.location.href = '/discover'
+        }, 500)
+      }, 1000)
     },
   })
 
-  const handleDemoLogin = (email?: string) => {
-    // Create a demo session and redirect to discover page
-    const demoToken = 'demo_token_' + Date.now()
-    document.cookie = `token=${demoToken}; path=/`
-    if (email) {
-      localStorage.setItem('demo_email', email)
-    }
-    setLoading(true)
-    setTimeout(() => {
-      window.location.href = '/discover'
-    }, 500)
-  }
-
   const handleGoogleSignIn = async () => {
     if (!isFirebaseConfigured) {
-      // Fall back to demo mode
-      handleDemoLogin()
+      // Demo mode
+      setLoading(true)
+      setTimeout(() => {
+        const demoToken = 'demo_token_' + Date.now()
+        document.cookie = `token=${demoToken}; path=/`
+        window.location.href = '/discover'
+      }, 500)
       return
     }
 
@@ -71,206 +80,246 @@ export const LoginGoogle: FC = () => {
       setLoading(true)
       setError('')
       const user = await signInWithGoogle()
-      
-      // Store user info
       const firebaseToken = await user.getIdToken()
       document.cookie = `token=${firebaseToken}; path=/`
-      localStorage.setItem('user_email', user.email || '')
-      localStorage.setItem('user_name', user.displayName || '')
-      
-      // Redirect to discover page
       window.location.href = '/discover'
     } catch (err: any) {
       setLoading(false)
       if (err.code === 'auth/popup-closed-by-user') {
         setError('Sign in cancelled')
-      } else if (err.code === 'auth/popup-blocked') {
-        setError('Please allow popups for this site')
       } else {
-        setError('Sign in failed. Try demo mode!')
+        setError('Sign in failed. Try email/password instead.')
       }
-      console.error('Google sign in error:', err)
     }
   }
 
-  const handleAppleSignIn = async () => {
-    setError('Apple Sign In coming soon! Try demo mode.')
-  }
-
-  const handleWhatsAppSignIn = async () => {
-    setError('WhatsApp login coming soon! Try demo mode.')
-  }
-
-  const { values, errors, handleSubmit, handleChange } = formik
+  const { values, errors, touched, handleSubmit, handleChange, handleBlur } = formik
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200">
         <BaseLoading large />
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200 px-4 py-8">
       <img
         alt="background"
         src={BackgroundLogin}
-        className="absolute inset-0 w-full h-full object-cover opacity-30"
+        className="fixed inset-0 w-full h-full object-cover opacity-30"
       />
       
-      <div className="relative z-10 w-full max-w-md mx-4 sm:mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 space-y-8">
-          {/* Logo and Title */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
-                <PetsLoveLogo width={56} height={56} />
+      <div className="relative z-10 w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10">
+          
+          {/* Logo & Title */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary-100 rounded-full flex items-center justify-center">
+                <PetsLoveLogo width={48} height={48} />
               </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">PawMatch</h1>
-              <p className="mt-2 text-sm text-gray-600">
-                {isSignup ? 'Create your account' : 'Welcome back!'}
-              </p>
-            </div>
-            
-            {/* Firebase Status Badge */}
-            {!isFirebaseConfigured && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                Demo Mode (Firebase not configured)
-              </div>
-            )}
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              {isSignup ? 'Create Account' : 'Welcome Back'}
+            </h1>
+            <p className="text-sm text-gray-600">
+              {isSignup ? 'Sign up to start matching with pets' : 'Sign in to continue'}
+            </p>
           </div>
 
-          {/* Error Message */}
+          {/* Error/Success Messages */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
-
-          {successEmailLogin ? (
-            <div className="text-center space-y-4 py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                You're all set!
-              </h2>
-              <p className="text-gray-600">
-                Redirecting you to discover pets...
-              </p>
+          
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800">{success}</p>
             </div>
-          ) : (
-            <>
-              {/* Social Login Buttons */}
-              <div className="space-y-3">
-                <button
-                  onClick={handleGoogleSignIn}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:border-primary-400 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-gray-700"
-                >
-                  <IconGoogle />
-                  {isFirebaseConfigured ? 'Continue with Google' : 'Try Demo with Google'}
-                </button>
+          )}
 
-                <button
-                  onClick={handleAppleSignIn}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-                >
-                  <IconApple />
-                  Continue with Apple
-                </button>
+          {/* Social Login Buttons */}
+          <div className="space-y-3 mb-6">
+            <button
+              onClick={handleGoogleSignIn}
+              type="button"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border-2 border-gray-200 rounded-xl hover:border-primary-400 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-gray-700 text-sm sm:text-base"
+            >
+              <IconGoogle />
+              <span>Continue with Google</span>
+            </button>
 
-                <button
-                  onClick={handleWhatsAppSignIn}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-                >
-                  <IconWhatsapp />
-                  Continue with WhatsApp
-                </button>
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleGoogleSignIn}
+                type="button"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
+              >
+                <IconApple />
+                <span className="hidden sm:inline">Apple</span>
+              </button>
 
-              {/* Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500 font-medium">
-                    Or try with email
-                  </span>
-                </div>
-              </div>
+              <button
+                onClick={handleGoogleSignIn}
+                type="button"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm"
+              >
+                <IconWhatsapp />
+                <span className="hidden sm:inline">WhatsApp</span>
+              </button>
+            </div>
+          </div>
 
-              {/* Email Form */}
-              <div className="space-y-4">
-                <BaseInput
-                  type="email"
-                  name="email"
-                  value={values.email}
-                  error={errors.email}
-                  label={t('common:email')}
-                  handleChange={handleChange}
-                  placeholder="you@example.com"
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500 font-medium">
+                Or {isSignup ? 'sign up' : 'sign in'} with email
+              </span>
+            </div>
+          </div>
+
+          {/* Email/Password Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={values.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="you@example.com"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all text-sm sm:text-base ${
+                  touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {touched.email && errors.email && (
+                <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                value={values.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="••••••••"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all text-sm sm:text-base ${
+                  touched.password && errors.password ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {touched.password && errors.password && (
+                <p className="mt-1 text-xs text-red-600">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Confirm Password (Signup only) */}
+            {isSignup && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  value={values.confirmPassword}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="••••••••"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all text-sm sm:text-base ${
+                    touched.confirmPassword && errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
-
-                <BaseButton
-                  onClick={handleSubmit}
-                  wFull
-                  style="primary"
-                  text="Continue with Email (Demo)"
-                />
+                {touched.confirmPassword && errors.confirmPassword && (
+                  <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>
+                )}
               </div>
+            )}
 
-              {/* Toggle Login/Signup */}
-              <div className="text-center">
+            {/* Forgot Password (Login only) */}
+            {!isSignup && (
+              <div className="flex justify-end">
                 <button
-                  onClick={() => setIsSignup(!isSignup)}
+                  type="button"
+                  onClick={() => setError('Password reset coming soon!')}
                   className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                 >
-                  {isSignup
-                    ? 'Already have an account? Sign in'
-                    : "Don't have an account? Sign up"}
+                  Forgot password?
                 </button>
               </div>
+            )}
 
-              {/* Terms Link */}
-              <div className="text-center pt-4 border-t border-gray-200">
-                <a
-                  href="/terms"
-                  className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  Terms of Service & Privacy Policy
-                </a>
-              </div>
-            </>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
+            >
+              {isSignup ? 'Create Account' : 'Sign In'}
+            </button>
+          </form>
+
+          {/* Toggle Signup/Login */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignup(!isSignup)
+                  setError('')
+                  setSuccess('')
+                  formik.resetForm()
+                }}
+                className="text-primary-600 hover:text-primary-700 font-semibold"
+              >
+                {isSignup ? 'Sign In' : 'Sign Up'}
+              </button>
+            </p>
+          </div>
+
+          {/* Terms */}
+          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+            <p className="text-xs text-gray-500">
+              By continuing, you agree to PawMatch's{' '}
+              <a href="/terms" className="text-primary-600 hover:underline">
+                Terms of Service
+              </a>
+            </p>
+          </div>
+
+          {/* Demo Mode Badge */}
+          {!isFirebaseConfigured && (
+            <div className="mt-4 text-center">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                Demo Mode Active
+              </span>
+            </div>
           )}
         </div>
-
-        {/* Additional Info */}
-        <p className="mt-8 text-center text-sm text-gray-600">
-          {isFirebaseConfigured 
-            ? 'By continuing, you agree to PawMatch\'s Terms of Service'
-            : '🎭 Demo mode active - Setup Firebase for full auth features'
-          }
-        </p>
-
-        {/* Setup Instructions Link */}
-        {!isFirebaseConfigured && (
-          <div className="mt-4 text-center">
-            <a 
-              href="/FIREBASE_SETUP.md" 
-              target="_blank"
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium underline"
-            >
-              📖 View Firebase Setup Instructions
-            </a>
-          </div>
-        )}
       </div>
     </div>
   )
