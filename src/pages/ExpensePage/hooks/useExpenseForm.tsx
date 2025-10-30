@@ -62,9 +62,9 @@ export const useExpenseForm = (
         }
 
         if (values.id) {
-          await updateExpense(values)
+          await updateExpense({ ...values, id: values.id, description: values.description || '' })
         } else {
-          await createExpense(values)
+          await createExpense({ ...values, description: values.description || '' })
         }
         setSubmitting(false)
         resetForm({

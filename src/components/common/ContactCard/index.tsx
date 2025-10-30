@@ -25,10 +25,10 @@ export const ContactCard: FC<Props> = ({
     'h-16 w-16 max-sm:h-[58px] max-sm:w-[58px] flex-shrink-0 rounded-full'
 
   const handleError = (
-    e: React.Syntheticappointment<HTMLImageElement, appointment>,
+    e: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => {
     const target = e.target as HTMLImageElement
-    target.onerror = null // Prappointments infinite loop if local image is also not found
+    target.onerror = null // Prevents infinite loop if local image is also not found
     target.src = MidDog
   }
 

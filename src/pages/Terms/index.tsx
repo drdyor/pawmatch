@@ -63,14 +63,14 @@ export const TermsPage: FC = () => {
         <Header buttonBack />
       </header>
       <FadeIn className="container mx-auto py-10">
-        {markdown && (
+        {markdown ? (
           <ReactMarkdown
             components={customRenderers}
             remarkPlugins={[remarkGfm]}
           >
             {markdown}
           </ReactMarkdown>
-        )}
+        ) : null}
       </FadeIn>
     </div>
   )

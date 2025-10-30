@@ -192,7 +192,7 @@ export const DashboardPage: FC = () => {
         .map((image) => {
           if (image === imageToDelete) {
             if (image.isNew) {
-              URL.revokeObjectURL(image.url) // Revoke the object URL to prappointment memory leaks
+              URL.revokeObjectURL(image.url) // Revoke the object URL to prevent memory leaks
               return null // Remove the image from the array
             }
             return { ...image, isDeleted: true }

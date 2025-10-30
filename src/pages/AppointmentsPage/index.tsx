@@ -26,7 +26,6 @@ export const AppointmentsPage: FC = () => {
   const { t } = useTranslation(['common', 'appointments'])
   const [isOpenAppointmentForm, setOpenAppointmentForm] =
     useState<boolean>(false)
-  const [titleForm, setTitleForm] = useState<string>(t('common:appointment'))
 
   const { formik, isLoadingUpdate } = useAppointmentForm(() =>
     setOpenAppointmentForm(false),
@@ -54,7 +53,6 @@ export const AppointmentsPage: FC = () => {
     }
 
     setOpenAppointmentForm(true)
-    setTitleForm(t('common:appointment'))
   }
 
   if (isLoading || isLoadingUpdate) {

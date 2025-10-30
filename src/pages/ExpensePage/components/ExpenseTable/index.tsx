@@ -146,8 +146,8 @@ export const ExpenseTable: React.FC<Props> = ({
           setShowCalendar={setShowCalendarInput}
           closeFilters={() => setShowCalendarInput(false)}
           rangeDate={{
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
+            startDate: new Date(dateRange.startDate),
+            endDate: new Date(dateRange.endDate),
             key: 'selection',
           }}
           error={''}

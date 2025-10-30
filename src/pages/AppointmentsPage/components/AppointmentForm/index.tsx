@@ -12,7 +12,6 @@ import { Props } from './types'
 export const AppointmentForm: React.FC<Props> = ({
   pet,
   pets,
-  title,
   values,
   errors,
   handleChange,

@@ -9,13 +9,13 @@ interface User {
 
 /**
  * Handles image loading errors by setting a default image
- * @param e - The synthetic appointment triggered on image error
+ * @param e - The synthetic event triggered on image error
  */
 const handleError = (
-  e: React.Syntheticappointment<HTMLImageElement, appointment>,
+  e: React.SyntheticEvent<HTMLImageElement, Event>,
 ) => {
   const target = e.target as HTMLImageElement
-  target.onerror = null // Prappointments infinite loop if the fallback image is also not found
+  target.onerror = null // Prevents infinite loop if the fallback image is also not found
   target.src = MidDog // Sets a default image when the original image fails to load
 }
 

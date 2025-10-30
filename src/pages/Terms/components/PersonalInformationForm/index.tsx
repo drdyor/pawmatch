@@ -81,10 +81,10 @@ export const PersonalInformationForm: FC<Props> = ({
     : `${import.meta.env.VITE_BUCKET_NAME}users/avatar/${user?.image}`
 
   const handleError = (
-    e: React.Syntheticappointment<HTMLImageElement, appointment>,
+    e: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => {
     const target = e.target as HTMLImageElement
-    target.onerror = null // Prappointments infinite loop if local image is also not found
+    target.onerror = null // Prevents infinite loop if local image is also not found
     target.src = MidDog
   }
 

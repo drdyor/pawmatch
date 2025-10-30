@@ -67,7 +67,7 @@ export const useInventoryForm = (
       URL.revokeObjectURL(imageToDelete.url) // Revoke the object URL to prevent memory leaks
       formik.setFieldValue(
         'newImages',
-        formik.values.newImages.filter((image) => image !== imageToDelete),
+        (formik.values.newImages ?? []).filter((image) => image !== imageToDelete),
       )
     } else {
       formik.setFieldValue(
