@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { observable } from 'mobx'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -13,6 +14,7 @@ import { ProfilePetPage } from './pages/ProfilePetPage/index.tsx'
 import { TermsPage } from './pages/Terms/index.tsx'
 import { UserProfilePage } from './pages/UserProfilePage/index.tsx'
 import { AppContextProps } from './services/AppContext.tsx'
+import { getCookie } from './utils/getCookie.ts'
 
 import './index.css'
 import './i18n.ts'
@@ -63,18 +65,58 @@ async function main() {
     },
   ])
 
-  // Always render unauthenticated version in demo mode
-  // Backend authentication disabled for Vercel deployment
-  return ReactDOM.createRoot(
-    document.getElementById('root') as HTMLElement,
-  ).render(
-    <React.StrictMode>
+  try {
+    const token = getCookie('token')
+
+    if (token) {
+      // Check if we're in demo mode or if backend is unavailable
+      // Default to true if not set (for easier deployment)
+      const isDemoMode = import.meta.env.VITE_DEMO_MODE !== 'false'
+      
+      if (isDemoMode) {
+        console.log('Running in DEMO MODE - skipping backend authentication')
+        throw new Error('Demo mode - no backend')
+      }
+
+      const { data } = await axios.get('/api/auth/login/', {
+        withCredentials: true,
+        timeout: 5000,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      appContext = observable({
+        session: { token: token },
+        user: data.user,
+      })
+    } else {
+      appContext = observable({
+        session: { token: '' },
+        user: null,
+      })
+      throw new Error('User not signed in')
+    }
+  } catch (_e) {
+    return ReactDOM.createRoot(
+      document.getElementById('root') as HTMLElement,
+    ).render(
+      <React.StrictMode>
+        <HelmetProvider>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={unauthenticatedRouter} />
+          </QueryClientProvider>
+        </HelmetProvider>
+      </React.StrictMode>,
+    )
+  }
+
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <QueryClientProvider client={queryClient}>
       <HelmetProvider>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={unauthenticatedRouter} />
-        </QueryClientProvider>
+        <App appContext={appContext} />
       </HelmetProvider>
-    </React.StrictMode>,
+    </QueryClientProvider>,
   )
 }
 

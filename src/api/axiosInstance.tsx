@@ -1,9 +1,43 @@
 import axios from 'axios'
 
-// Set up base URL only - remove interceptors that cause issues in production
+import { getCookie } from '../utils/getCookie'
+
+// Set up base URL and other global settings
 axios.defaults.baseURL = '/'
 
-// Interceptors disabled for demo mode - they cause "c.global is undefined" error in Vercel
-// When backend is ready, we can re-enable with proper null checks
+// Add a request interceptor
+axios.interceptors.request.use(
+  (config) => {
+    const token = getCookie('token')
+    if (token && config.headers) {
+      config.headers['Authorization'] = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
+
+// Add a response interceptor
+axios.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    const token = getCookie('token')
+    
+    // Check if error.response exists before accessing its properties
+    if (
+      !window.location.href.includes('/login') &&
+      error.response?.status === 401 &&
+      token
+    ) {
+      window.location.href = '/login'
+    }
+
+    return Promise.reject(error)
+  },
+)
 
 export default axios
