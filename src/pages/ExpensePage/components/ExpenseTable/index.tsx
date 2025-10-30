@@ -49,6 +49,12 @@ interface Props {
   resetFilters: () => void
 }
 
+interface DateRangeType {
+  key: string
+  endDate: Date | null
+  startDate: Date | null
+}
+
 interface Expense {
   id: string
   title: string
@@ -76,6 +82,15 @@ export const ExpenseTable: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation(['common', 'expense'])
   const [showCalendarInput, setShowCalendarInput] = useState(false)
+  
+  const handleDateRangeChange = (range: DateRangeType) => {
+    if (range.startDate && range.endDate) {
+      handleChangeDate({
+        startDate: range.startDate.toISOString(),
+        endDate: range.endDate.toISOString(),
+      })
+    }
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 shadow-md rounded-lg mt-4 sm:mt-10">
@@ -141,7 +156,7 @@ export const ExpenseTable: React.FC<Props> = ({
           }}
           open={showCalendarInput}
           mode="range"
-          handleChange={handleChangeDate}
+          handleChange={handleDateRangeChange}
           textButtonDate={t('common:selectDate')}
           setShowCalendar={setShowCalendarInput}
           closeFilters={() => setShowCalendarInput(false)}

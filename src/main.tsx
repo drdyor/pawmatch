@@ -29,7 +29,7 @@ async function main() {
     user: null,
   })
 
-  const router = createBrowserRouter([
+  const unauthenticatedRouter = createBrowserRouter([
     {
       path: '/',
       element: <Navbar />,
@@ -56,11 +56,11 @@ async function main() {
         },
         {
           path: '/',
-          element: <AdoptionPetPage />,
+          element: <LoginPage />,
         },
         {
           path: '*',
-          element: <AdoptionPetPage />,
+          element: <LoginPage />,
         },
       ],
     },
@@ -96,7 +96,7 @@ async function main() {
       <React.StrictMode>
         <HelmetProvider>
           <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
+            <RouterProvider router={unauthenticatedRouter} />
           </QueryClientProvider>
         </HelmetProvider>
       </React.StrictMode>,
