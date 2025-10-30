@@ -3,6 +3,57 @@ import { ICreatePetForm } from '../pages/DashboardPage/constants'
 import axios from './axiosInstance'
 import { resizeImages } from './utils/resizeImages'
 
+// Check if we're in demo mode
+const isDemoMode = () => {
+  return import.meta.env.VITE_DEMO_MODE !== 'false'
+}
+
+// Mock data for demo mode
+const mockPets = [
+  {
+    id: '1',
+    name: 'Max',
+    category: 'Dog',
+    breed: 'Golden Retriever',
+    age: '2 years',
+    gender: 'Male',
+    city: 'Valletta',
+    country: 'Malta',
+    adopted: false,
+    images: ['https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800'],
+    description: 'Friendly and energetic Golden Retriever looking for a loving home.',
+    owner: { id: 'owner1', username: 'JohnDoe' },
+  },
+  {
+    id: '2',
+    name: 'Luna',
+    category: 'Cat',
+    breed: 'Siamese',
+    age: '1 year',
+    gender: 'Female',
+    city: 'Sliema',
+    country: 'Malta',
+    adopted: false,
+    images: ['https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=800'],
+    description: 'Beautiful Siamese cat, very affectionate and playful.',
+    owner: { id: 'owner2', username: 'JaneSmith' },
+  },
+  {
+    id: '3',
+    name: 'Rocky',
+    category: 'Dog',
+    breed: 'German Shepherd',
+    age: '3 years',
+    gender: 'Male',
+    city: 'Mdina',
+    country: 'Malta',
+    adopted: false,
+    images: ['https://images.unsplash.com/photo-1568572933382-74d440642117?w=800'],
+    description: 'Loyal German Shepherd, great with kids and well-trained.',
+    owner: { id: 'owner3', username: 'MikeBrown' },
+  },
+]
+
 export const getPets = async ({
   page,
   city,
@@ -18,6 +69,16 @@ export const getPets = async ({
   category?: string
   adopted?: boolean
 }) => {
+  // Return mock data in demo mode
+  if (isDemoMode()) {
+    return {
+      pets: mockPets,
+      totalPages: 1,
+      currentPage: 1,
+      total: mockPets.length,
+    }
+  }
+
   const response = await axios.get(
     `/api/v1/pets?category=${category}&adopted=${adopted}&gender=${gender}&page=${page}&country=${country}&city=${city}`,
   )
