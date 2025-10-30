@@ -76,22 +76,15 @@ export default function PetDetailScreen({ navigation, route }: any) {
   };
 
   const handleContact = () => {
-    if (!owner) return;
+    if (!owner || !currentUser) return;
     
-    Alert.alert(
-      'Contact Owner',
-      `Contact ${owner.full_name || owner.kennel_name || owner.shelter_name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Send Message',
-          onPress: () => {
-            // TODO: Navigate to messages
-            Alert.alert('Coming Soon', 'Messaging feature will be available soon!');
-          },
-        },
-      ]
-    );
+    const conversationId = [currentUser.id, owner.id].sort().join('_');
+    
+    navigation.navigate('ChatThread', {
+      conversationId,
+      otherUserId: owner.id,
+      otherUserName: owner.kennel_name || owner.shelter_name || owner.full_name || 'Owner',
+    });
   };
 
   const getAge = () => {

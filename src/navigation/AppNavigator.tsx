@@ -39,6 +39,7 @@ import VetProfileScreen from '../screens/vet/VetProfileScreen';
 // Shared Screens
 import MessagesScreen from '../screens/shared/MessagesScreen';
 import PetDetailScreen from '../screens/shared/PetDetailScreen';
+import ChatThreadScreen from '../screens/shared/ChatThreadScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -149,6 +150,7 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
             {/* Shared Screens */}
             <Stack.Screen name="Messages" component={MessagesScreen} />
             <Stack.Screen name="PetDetail" component={PetDetailScreen} />
+            <Stack.Screen name="ChatThread" component={ChatThreadScreen} />
           </>
         )}
       </Stack.Navigator>
