@@ -173,7 +173,7 @@ export const LoginGoogle: FC = () => {
                   onClick={handleGoogleSignIn}
                   className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:border-primary-400 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-gray-700"
                 >
-                  <IconGoogle width={20} height={20} />
+                  <IconGoogle />
                   {isFirebaseConfigured ? 'Continue with Google' : 'Try Demo with Google'}
                 </button>
 
@@ -181,7 +181,7 @@ export const LoginGoogle: FC = () => {
                   onClick={handleAppleSignIn}
                   className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
                 >
-                  <IconApple width={20} height={20} fill="white" />
+                  <IconApple />
                   Continue with Apple
                 </button>
 
@@ -189,7 +189,7 @@ export const LoginGoogle: FC = () => {
                   onClick={handleWhatsAppSignIn}
                   className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
                 >
-                  <IconWhatsapp width={20} height={20} />
+                  <IconWhatsapp />
                   Continue with WhatsApp
                 </button>
               </div>

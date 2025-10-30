@@ -1,9 +1,6 @@
-import { AnimatePresence } from 'framer-motion'
 import { FC, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-
-import { IconClose, IconUser } from '../../assets/icons'
 import { BaseButton } from '../../components/common/BaseButton'
 import { BaseLoading } from '../../components/common/BaseLoading'
 import { SwipeableCard } from '../../components/common/SwipeableCard'
@@ -13,7 +10,6 @@ export const SwipeDiscoverPage: FC = () => {
   const { t } = useTranslation(['common', 'searchPet'])
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [direction, setDirection] = useState<'left' | 'right' | null>(null)
   
   const { data, isLoading } = useGetPets({
     page: 1,
@@ -32,18 +28,14 @@ export const SwipeDiscoverPage: FC = () => {
   }, [currentIndex, pets])
 
   const handleSwipeLeft = () => {
-    setDirection('left')
     setTimeout(() => {
       setCurrentIndex((prev) => Math.min(prev + 1, pets.length - 1))
-      setDirection(null)
     }, 300)
   }
 
   const handleSwipeRight = () => {
-    setDirection('right')
     setTimeout(() => {
       setCurrentIndex((prev) => Math.min(prev + 1, pets.length - 1))
-      setDirection(null)
     }, 300)
   }
 
@@ -127,7 +119,7 @@ export const SwipeDiscoverPage: FC = () => {
           onClick={() => navigate('/dashboard')}
           className="w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl transition-shadow"
         >
-          <IconClose className="w-6 h-6" />
+          <img src="/icons/close.svg" alt="close" className="w-6 h-6" />
         </button>
 
         <div className="px-6 py-3 bg-white rounded-full shadow-lg">
@@ -140,7 +132,9 @@ export const SwipeDiscoverPage: FC = () => {
           onClick={() => navigate('/settings')}
           className="w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl transition-shadow"
         >
-          <IconUser className="w-6 h-6" />
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
         </button>
       </div>
 
@@ -154,8 +148,7 @@ export const SwipeDiscoverPage: FC = () => {
       {/* Card Stack */}
       <div className="relative flex items-center justify-center" style={{ height: 'calc(100vh - 250px)' }}>
         <div className="relative w-full max-w-md h-full px-4">
-          <AnimatePresence>
-            {pets.slice(currentIndex, currentIndex + 2).map((pet, index) => (
+          {pets.slice(currentIndex, currentIndex + 2).map((pet: any, index: number) => (
               <div
                 key={pet.id}
                 className="absolute inset-0"
@@ -176,7 +169,6 @@ export const SwipeDiscoverPage: FC = () => {
                 )}
               </div>
             ))}
-          </AnimatePresence>
         </div>
       </div>
 

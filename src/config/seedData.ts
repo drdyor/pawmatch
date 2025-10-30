@@ -1,7 +1,7 @@
 // Demo seed data for Firestore
 // Run this once to populate your Firebase
 
-import { collection, doc, setDoc } from 'firebase/firestore'
+import { doc, setDoc } from 'firebase/firestore'
 import { db } from './firebase'
 
 export const DEMO_USERS = [

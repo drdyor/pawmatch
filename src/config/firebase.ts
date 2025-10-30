@@ -17,11 +17,11 @@ const firebaseConfig = {
 const isFirebaseConfigured = Object.values(firebaseConfig).every(val => val !== '')
 
 // Initialize Firebase only if configured
-let app
-let auth
-let db
-let storage
-let googleProvider
+let app: ReturnType<typeof initializeApp> | undefined
+let auth: ReturnType<typeof getAuth> | undefined
+let db: ReturnType<typeof getFirestore> | undefined
+let storage: ReturnType<typeof getStorage> | undefined
+let googleProvider: GoogleAuthProvider | undefined
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig)
