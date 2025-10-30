@@ -69,6 +69,14 @@ async function main() {
     const token = getCookie('token')
 
     if (token) {
+      // Check if we're in demo mode or if backend is unavailable
+      const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
+      
+      if (isDemoMode) {
+        console.log('Running in DEMO MODE - skipping backend authentication')
+        throw new Error('Demo mode - no backend')
+      }
+
       const { data } = await axios.get('/api/auth/login/', {
         withCredentials: true,
         timeout: 5000,
