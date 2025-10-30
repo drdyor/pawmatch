@@ -1,3 +1,4 @@
+import IconApple from './iconApple'
 import IconBack from './iconBack.svg'
 import IconBuildingStore from './iconBuildingStore.svg'
 import IconCalendarStats from './iconCalendarStats'
@@ -25,6 +26,7 @@ import IconUser from './iconUser.svg'
 import IconWhatsapp from './iconWhatsapp.svg'
 
 export {
+  IconApple,
   IconCoin,
   IconMoneyBag,
   IconCalendarStats,
