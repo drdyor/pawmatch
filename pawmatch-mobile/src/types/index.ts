@@ -15,6 +15,12 @@ export interface User {
   clinicName?: string;
   isFirstTimeBreeder?: boolean;
   profilePhoto?: string;
+  
+  // Buyer adoption preferences
+  preferredSpecies?: 'dog' | 'cat' | 'both';
+  preferredDogSize?: 'small' | 'medium' | 'large' | 'any';
+  preferredAge?: 'young' | 'adult' | 'senior' | 'any';
+  
   createdAt: string;
 }
 
@@ -29,6 +35,7 @@ export interface Pet {
   sex: 'male' | 'female';
   dateOfBirth: string;
   weight?: number;
+  size?: 'small' | 'medium' | 'large'; // For dogs
   photos: string[];
   healthRecords: HealthRecord[];
   status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat';
@@ -60,6 +67,7 @@ export interface HeatCycle {
   fertileWindowStart?: string;
   fertileWindowEnd?: string;
   notes?: string;
+  notificationsSent?: boolean; // Track if stud notifications sent
 }
 
 // Listing
@@ -99,7 +107,7 @@ export interface Message {
 export interface Notification {
   id: string;
   userId: string;
-  type: 'litter_alert' | 'price_alert' | 'shelter_urgent' | 'vet_reminder' | 'message' | 'match';
+  type: 'litter_alert' | 'price_alert' | 'shelter_urgent' | 'vet_reminder' | 'message' | 'match' | 'heat_notification';
   title: string;
   body: string;
   data?: any;
@@ -127,4 +135,16 @@ export interface Contract {
 export interface Signature {
   name: string;
   signedAt: string;
+}
+
+// Stud Interest (for heat notifications)
+export interface StudInterest {
+  id: string;
+  heatCycleId: string;
+  femalePetId: string;
+  studPetId: string;
+  studOwnerId: string;
+  status: 'pending' | 'interested' | 'declined';
+  message?: string;
+  createdAt: string;
 }
