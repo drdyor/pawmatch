@@ -4,16 +4,38 @@ import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
 import { Pet } from '../../types';
 import SwipeableCard from '../../components/SwipeableCard';
+import {
+  checkDailySwipeLimit,
+  hasSwipedToday,
+  recordSwipe,
+  getCardDeck,
+  getUserPremiumStatus,
+} from '../../services/swipeEngine';
 
 export default function BreederMatchesScreen({ navigation }: any) {
   const [availableStuds, setAvailableStuds] = useState<Pet[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [myFemalePets, setMyFemalePets] = useState<Pet[]>([]);
+  const [swipeLimit, setSwipeLimit] = useState<{ canSwipe: boolean; remaining: number }>({
+    canSwipe: true,
+    remaining: 10,
+  });
 
   useEffect(() => {
     loadData();
+    checkSwipeLimit();
   }, []);
+
+  const checkSwipeLimit = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const isPremium = await getUserPremiumStatus(user.id);
+    const limit = await checkDailySwipeLimit(user.id, isPremium);
+    
+    setSwipeLimit(limit);
+  };
 
   const loadData = async () => {
     try {
@@ -71,15 +93,32 @@ export default function BreederMatchesScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Create notification for stud owner
-      await supabase.from('notifications').insert({
-        user_id: currentStud.ownerId,
-        type: 'match',
-        title: '💛 Breeding Interest',
-        body: `Someone is interested in ${currentStud.name} for breeding. Check your messages!`,
-        data: { pet_id: currentStud.id, from_user_id: user.id },
-        read: false,
-      });
+      // Check swipe limit
+      if (!swipeLimit.canSwipe) {
+        Alert.alert(
+          'Daily Limit Reached',
+          'You\'ve used all your swipes today. Upgrade to Premium for unlimited swipes!',
+          [
+            { text: 'Maybe Later' },
+            { text: 'Go Premium', onPress: () => navigation.navigate('Settings') },
+          ]
+        );
+        return;
+      }
+
+      // Check duplicate
+      const alreadySwiped = await hasSwipedToday(user.id, currentStud.id, 'stud');
+      if (alreadySwiped) {
+        Alert.alert('Already Swiped', 'You\'ve already swiped on this stud today.');
+        setCurrentIndex(prev => prev + 1);
+        return;
+      }
+
+      // Record swipe
+      await recordSwipe(user.id, currentStud.id, 'stud', 'like');
+
+      // Update limit
+      await checkSwipeLimit();
 
       Alert.alert('Match Request Sent!', `The owner of ${currentStud.name} has been notified.`);
     } catch (error) {
@@ -140,10 +179,19 @@ export default function BreederMatchesScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Find Stud Matches</Text>
-        <Text style={styles.subtitle}>
-          Swipe right to express interest • Left to pass
-        </Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.title}>Find Stud Matches</Text>
+            <Text style={styles.subtitle}>
+              Swipe right to express interest • Left to pass
+            </Text>
+          </View>
+          <View style={styles.swipeCounter}>
+            <Text style={styles.swipeCountText}>
+              {swipeLimit.remaining} left
+            </Text>
+          </View>
+        </View>
       </View>
 
       <View style={styles.cardContainer}>
@@ -222,6 +270,22 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  swipeCounter: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  swipeCountText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000',
   },
   title: {
     fontSize: 28,
