@@ -70,7 +70,8 @@ async function main() {
 
     if (token) {
       // Check if we're in demo mode or if backend is unavailable
-      const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
+      // Default to true if not set (for easier deployment)
+      const isDemoMode = import.meta.env.VITE_DEMO_MODE !== 'false'
       
       if (isDemoMode) {
         console.log('Running in DEMO MODE - skipping backend authentication')
