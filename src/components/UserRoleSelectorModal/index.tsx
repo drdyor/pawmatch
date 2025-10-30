@@ -78,6 +78,9 @@ export const UserRoleSelectorModal: FC<Props> = ({
 
       formik.resetForm()
       setOpenRoleModal(false)
+      
+      // Redirect to discover page after onboarding
+      window.location.href = '/discover'
     },
   })
 

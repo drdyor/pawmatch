@@ -13,6 +13,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { ProfilePetPage } from './pages/ProfilePetPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { SwipeDiscoverPage } from './pages/SwipeDiscoverPage'
 import { UserProfilePage } from './pages/UserProfilePage'
 import { AppContext, AppContextProps } from './services/AppContext'
 
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
       {
         path: '/dashboard',
         element: <DashboardPage />,
+      },
+      {
+        path: '/discover',
+        element: <SwipeDiscoverPage />,
       },
       {
         path: '/pet/:id',
@@ -70,11 +75,11 @@ const router = createBrowserRouter([
       },
       {
         path: '/',
-        element: <DashboardPage />,
+        element: <SwipeDiscoverPage />,
       },
       {
         path: '*',
-        element: <DashboardPage />,
+        element: <SwipeDiscoverPage />,
       },
     ],
   },
