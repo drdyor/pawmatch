@@ -1,244 +1,216 @@
 import React, { useState } from 'react';
 
-// Mobile frame wrapper
-const Mobile = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-amber-50 to-rose-50 p-6">
-    <div className="relative w-[390px] max-w-full bg-white rounded-[28px] shadow-xl ring-1 ring-black/5 overflow-hidden">
-      {/* mobile notch */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-0 h-6 w-40 bg-black/10 rounded-b-2xl z-50" />
+type Pet = { 
+  id: string; 
+  name: string; 
+  breed: string; 
+  img: string; 
+  votes: number; 
+};
+
+type Pair = { 
+  id: string; 
+  a: Pet; 
+  b: Pet; 
+  votes: number; 
+  preorders: number; 
+};
+
+const demoPets: Pet[] = [
+  { id: 'luna', name: 'Luna', breed: 'Border Collie (F)', img: 'https://images.unsplash.com/photo-1568572933382-74d440642117?w=400&h=400&fit=crop', votes: 500 },
+  { id: 'max', name: 'Max', breed: 'Border Collie (M)', img: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=400&h=400&fit=crop', votes: 320 },
+  { id: 'bella', name: 'Bella', breed: 'Golden Retriever (F)', img: 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop', votes: 210 },
+  { id: 'charlie', name: 'Charlie', breed: 'Labrador (M)', img: 'https://images.unsplash.com/photo-1558788353-f76d92427f16?w=400&h=400&fit=crop', votes: 190 },
+];
+
+const demoPairs: Pair[] = [
+  { 
+    id: 'luna-max', 
+    a: demoPets[0], 
+    b: demoPets[1], 
+    votes: 250, 
+    preorders: 50 
+  },
+  { 
+    id: 'bella-charlie', 
+    a: demoPets[2], 
+    b: demoPets[3], 
+    votes: 140, 
+    preorders: 18 
+  },
+];
+
+function Tab({ active, onClick, children }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 rounded-xl2 border transition
+        ${active 
+          ? 'bg-brand-card border-brand-accent text-white'
+          : 'bg-transparent border-brand-border text-brand-sub hover:border-brand-accent/50'
+        }`}
+    >
       {children}
-    </div>
-  </div>
-);
-
-const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white rounded-2xl border border-neutral-200 shadow-sm ${className}`}>{children}</div>
-);
-
-const Chip = ({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 border transition shadow-sm ${
-      active
-        ? "bg-amber-500 text-white border-amber-500"
-        : "bg-white border-neutral-200 hover:border-neutral-300"
-    }`}
-  >
-    {children}
-  </button>
-);
-
-interface Pet {
-  id: string;
-  name: string;
-  breed: string;
-  img: string;
-  votes: number;
+    </button>
+  );
 }
 
-const popularPets: Pet[] = [
-  { id: '1', name: 'Luna', breed: 'Border Collie', img: 'https://images.unsplash.com/photo-1568572933382-74d440642117?w=400&h=400&fit=crop', votes: 500 },
-  { id: '2', name: 'Max', breed: 'Border Collie', img: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=400&h=400&fit=crop', votes: 320 },
-  { id: '3', name: 'Bella', breed: 'Golden Retriever', img: 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop', votes: 180 },
-  { id: '4', name: 'Charlie', breed: 'Labrador', img: 'https://images.unsplash.com/photo-1558788353-f76d92427f16?w=400&h=400&fit=crop', votes: 95 },
-];
+function Card({ children }: any) {
+  return (
+    <div className="rounded-xl2 border border-brand-border bg-brand-card hover:shadow-lift transition p-4">
+      {children}
+    </div>
+  );
+}
 
-const trendingPairs = [
-  {
-    petA: { name: 'Luna', breed: 'Border Collie', img: 'https://images.unsplash.com/photo-1568572933382-74d440642117?w=300&h=200&fit=crop' },
-    petB: { name: 'Max', breed: 'Border Collie', img: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=300&h=200&fit=crop' },
-    votes: 250,
-    preOrders: 50,
-  },
-  {
-    petA: { name: 'Bella', breed: 'Golden Retriever', img: 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=300&h=200&fit=crop' },
-    petB: { name: 'Charlie', breed: 'Labrador', img: 'https://images.unsplash.com/photo-1558788353-f76d92427f16?w=300&h=200&fit=crop' },
-    votes: 120,
-    preOrders: 15,
-  },
-];
+function VotePill({ onClick, active }: { onClick: () => void; active: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 rounded-full text-sm border transition
+        ${active 
+          ? 'border-brand-accent bg-brand-accent/20 text-white'
+          : 'border-brand-border text-brand-sub hover:border-brand-accent/50'
+        }`}
+    >
+      💛 Vote
+    </button>
+  );
+}
 
 export const VotingPage: React.FC = () => {
-  const [tab, setTab] = useState<'popular' | 'pairs'>('popular');
-  const [voted, setVoted] = useState<Record<string, boolean>>({});
-  const [showCommitment, setShowCommitment] = useState<number | null>(null);
+  const [tab, setTab] = useState<'pets' | 'pairs'>('pets');
+  const [pets, setPets] = useState<Pet[]>(demoPets);
+  const [pairs, setPairs] = useState<Pair[]>(demoPairs);
+  const [votedPetIds, setVotedPetIds] = useState<Set<string>>(new Set());
+  const [votedPairIds, setVotedPairIds] = useState<Set<string>>(new Set());
 
-  const toggleVote = (id: string) => {
-    setVoted(prev => ({ ...prev, [id]: !prev[id] }));
+  const togglePet = (id: string) => {
+    const next = new Set(votedPetIds);
+    const updated = pets.map(p => {
+      if (p.id !== id) return p;
+      if (next.has(id)) { 
+        next.delete(id); 
+        return { ...p, votes: Math.max(0, p.votes - 1) }; 
+      }
+      next.add(id); 
+      return { ...p, votes: p.votes + 1 };
+    });
+    setVotedPetIds(next); 
+    setPets(updated);
+  };
+
+  const togglePair = (id: string) => {
+    const next = new Set(votedPairIds);
+    const updated = pairs.map(pr => {
+      if (pr.id !== id) return pr;
+      if (next.has(id)) { 
+        next.delete(id); 
+        return { ...pr, votes: Math.max(0, pr.votes - 1) }; 
+      }
+      next.add(id); 
+      return { ...pr, votes: pr.votes + 1 };
+    });
+    setVotedPairIds(next); 
+    setPairs(updated);
   };
 
   return (
-    <Mobile>
-      <div className="px-5 pt-10 pb-6 h-[800px] overflow-y-auto">
-        {/* Header */}
-        <div className="mb-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-2xl">🐾</span>
-            <h1 className="text-2xl font-bold text-neutral-900">PawMatch</h1>
+    <main className="min-h-screen bg-brand-bg text-brand-text">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">🔥 Community Voting</h1>
+            <p className="text-brand-sub mt-1">
+              Vote for the puppies you want to see. Owners get notified when demand spikes.
+            </p>
           </div>
-          <p className="text-neutral-600 text-sm">Vote for puppies you want to see in Malta!</p>
-        </div>
+          <div className="flex gap-2">
+            <Tab active={tab === 'pets'} onClick={() => setTab('pets')}>
+              🔥 Popular Pets
+            </Tab>
+            <Tab active={tab === 'pairs'} onClick={() => setTab('pairs')}>
+              💛 Dream Pairs
+            </Tab>
+          </div>
+        </header>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 p-1 bg-neutral-100 rounded-2xl">
-          <button
-            onClick={() => setTab('popular')}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all text-sm ${
-              tab === 'popular'
-                ? 'bg-white shadow-sm text-neutral-900'
-                : 'text-neutral-600'
-            }`}
-          >
-            🔥 Popular
-          </button>
-          <button
-            onClick={() => setTab('pairs')}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all text-sm ${
-              tab === 'pairs'
-                ? 'bg-white shadow-sm text-neutral-900'
-                : 'text-neutral-600'
-            }`}
-          >
-            💛 Dream Pairs
-          </button>
-        </div>
-
-        {/* Content */}
-        {tab === 'popular' && (
-          <div className="space-y-4">
-            {popularPets.map(pet => (
-              <Card key={pet.id} className="overflow-hidden">
-                <div className="h-48 bg-neutral-100 relative">
-                  <img src={pet.img} alt={pet.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-bold text-lg text-neutral-900">{pet.name}</h3>
-                      <p className="text-sm text-neutral-600">{pet.breed}</p>
+        {tab === 'pets' && (
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pets.map(p => {
+              const active = votedPetIds.has(p.id);
+              return (
+                <Card key={p.id}>
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-14 h-14 overflow-hidden rounded-xl2 border border-brand-border flex-shrink-0">
+                      <img 
+                        src={p.img} 
+                        alt={p.name} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xl">🔥</span>
-                      <span className="font-bold text-neutral-900">{pet.votes + (voted[pet.id] ? 1 : 0)}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium truncate">{p.name}</div>
+                      <div className="text-sm text-brand-sub truncate">{p.breed}</div>
+                    </div>
+                    <div className="ml-auto text-sm text-right">
+                      <div className="text-brand-sub text-xs">want puppies</div>
+                      <div className="font-semibold">{p.votes.toLocaleString()}</div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => toggleVote(pet.id)}
-                    className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                      voted[pet.id]
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                    }`}
-                  >
-                    {voted[pet.id] ? '💛 Voted' : '🤍 Vote for puppies'}
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  <div className="mt-3 flex justify-end">
+                    <VotePill active={active} onClick={() => togglePet(p.id)} />
+                  </div>
+                </Card>
+              );
+            })}
+          </section>
         )}
 
         {tab === 'pairs' && (
-          <div className="space-y-4">
-            {trendingPairs.map((pair, idx) => (
-              <Card key={idx} className="overflow-hidden border-2 border-amber-500">
-                {/* Photos */}
-                <div className="flex h-32">
-                  <div className="flex-1 bg-neutral-100">
-                    <img src={pair.petA.img} alt={pair.petA.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 bg-neutral-100">
-                    <img src={pair.petB.img} alt={pair.petB.name} className="w-full h-full object-cover" />
-                  </div>
-                </div>
-                
-                {/* Heart overlay */}
-                <div className="relative -mt-5 flex justify-center">
-                  <div className="bg-white rounded-full p-2 shadow-lg border-2 border-amber-500">
-                    <span className="text-2xl">💛</span>
-                  </div>
-                </div>
-
-                <div className="p-4 pt-2">
-                  <h3 className="text-center font-bold text-lg text-neutral-900 mb-1">
-                    {pair.petA.name} × {pair.petB.name}
-                  </h3>
-                  <p className="text-center text-sm text-neutral-600 mb-3">
-                    {pair.petA.breed} + {pair.petB.breed}
-                  </p>
-
-                  {/* Stats */}
-                  <div className="flex justify-center gap-6 mb-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-neutral-900">{pair.votes}</div>
-                      <div className="text-xs text-neutral-600">votes</div>
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+            {pairs.map(pr => {
+              const active = votedPairIds.has(pr.id);
+              return (
+                <Card key={pr.id}>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-16 h-16 rounded-xl2 overflow-hidden border border-brand-border flex-shrink-0">
+                      <img 
+                        src={pr.a.img} 
+                        alt={pr.a.name} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
-                    {pair.preOrders > 0 && (
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-emerald-600">{pair.preOrders}</div>
-                        <div className="text-xs text-neutral-600">pre-orders!</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {showCommitment === idx ? (
-                    <div className="space-y-2">
-                      <p className="text-center text-sm font-medium text-neutral-700 mb-3">How interested?</p>
-                      <button
-                        onClick={() => setShowCommitment(null)}
-                        className="w-full py-3 rounded-xl font-semibold bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition"
-                      >
-                        👀 Interested
-                      </button>
-                      <button
-                        onClick={() => setShowCommitment(null)}
-                        className="w-full py-3 rounded-xl font-semibold bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition"
-                      >
-                        💛 Very Interested
-                      </button>
-                      <button
-                        onClick={() => setShowCommitment(null)}
-                        className="w-full py-3 rounded-xl font-semibold bg-amber-500 text-white hover:bg-amber-600 transition"
-                      >
-                        🎯 Reserve a Puppy!
-                      </button>
+                    <div className="text-2xl">💛</div>
+                    <div className="relative w-16 h-16 rounded-xl2 overflow-hidden border border-brand-border flex-shrink-0">
+                      <img 
+                        src={pr.b.img} 
+                        alt={pr.b.name} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowCommitment(idx)}
-                      className="w-full py-3 rounded-xl font-semibold bg-amber-500 text-white hover:bg-amber-600 transition"
-                    >
-                      💛 I want these puppies!
-                    </button>
-                  )}
-                </div>
-
-                {pair.votes >= 100 && (
-                  <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                    🔥 TRENDING
+                    <div className="ml-auto text-right">
+                      <div className="text-sm text-brand-sub">votes</div>
+                      <div className="font-semibold">{pr.votes.toLocaleString()}</div>
+                      <div className="text-xs text-brand-sub mt-1">{pr.preorders} pre-orders</div>
+                    </div>
                   </div>
-                )}
-              </Card>
-            ))}
-
-            {/* Info box */}
-            <Card className="p-4 bg-amber-50 border-amber-200">
-              <div className="flex items-start gap-2 mb-2">
-                <span className="text-lg">💡</span>
-                <div>
-                  <h4 className="font-semibold text-neutral-900 text-sm mb-2">How it works:</h4>
-                  <ul className="space-y-1 text-xs text-neutral-700">
-                    <li>• Vote for pairs you'd love to see</li>
-                    <li>• Both owners get notified</li>
-                    <li>• Pre-order shows serious demand</li>
-                    <li>• Owners decide if they breed!</li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-          </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-sm text-brand-sub truncate">
+                      {pr.a.name} × {pr.b.name}
+                    </div>
+                    <VotePill active={active} onClick={() => togglePair(pr.id)} />
+                  </div>
+                </Card>
+              );
+            })}
+          </section>
         )}
+
+        <aside className="rounded-xl2 border border-brand-border p-4 text-sm text-brand-sub">
+          <strong className="text-brand-text">How it works:</strong> Vote on pets or pairs → owners see demand → when they enable breeding, voters get notified and first dibs.
+        </aside>
       </div>
-    </Mobile>
+    </main>
   );
 };

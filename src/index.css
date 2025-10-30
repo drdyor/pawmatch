@@ -2,6 +2,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply antialiased;
+}
 .swiper-button-prev::after {
   left: 30;
   color: #d6f1e9;
