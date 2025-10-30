@@ -18,6 +18,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { SwipeDiscoverPage } from './pages/SwipeDiscoverPage'
 import { UserProfilePage } from './pages/UserProfilePage'
 import { VotingPage } from './pages/VotingPage'
+import { MessagesPage } from './pages/MessagesPage'
 import { AppContext, AppContextProps } from './services/AppContext'
 
 import './api/axiosInstance'
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
             {
               path: '/onboarding-new',
               element: <NewOnboardingPage />,
+            },
+            {
+              path: '/messages',
+              element: <MessagesPage />,
             },
       {
         path: '/pet/:id',
