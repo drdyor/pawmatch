@@ -422,7 +422,7 @@ function SwipePreview({ onNext, onBack }: any) {
           </div>
         </Card>
 
-        <button onClick={onNext} className="mt-5 w-full py-3 rounded-2xl bg-neutral-900 text-white font-medium shadow-sm hover:bg-black">Finish onboarding</button>
+        <button onClick={() => onNext({})} className="mt-5 w-full py-3 rounded-2xl bg-neutral-900 text-white font-medium shadow-sm hover:bg-black">Finish onboarding</button>
 
         {matched && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-6 z-50">
@@ -438,7 +438,7 @@ function SwipePreview({ onNext, onBack }: any) {
                 </div>
                 <div className="flex gap-2 mt-4">
                   <button onClick={()=>setMatched(false)} className="flex-1 py-2 rounded-xl border border-neutral-300">Close</button>
-                  <button onClick={()=>setMatched(false)} className="flex-1 py-2 rounded-xl bg-amber-500 text-white">Open Chat</button>
+                  <button onClick={() => { setMatched(false); onNext({ initialTab: 'messages' }); }} className="flex-1 py-2 rounded-xl bg-amber-500 text-white">Open Chat</button>
                 </div>
               </div>
             </Card>
@@ -449,8 +449,8 @@ function SwipePreview({ onNext, onBack }: any) {
   );
 }
 
-function Dashboard() {
-  const [tab, setTab] = useState("match");
+function Dashboard({ initialTab = "match" }: any) {
+  const [tab, setTab] = useState(initialTab);
   
   return (
     <div className="h-[800px] relative bg-neutral-50">
@@ -698,8 +698,8 @@ export const NewOnboardingPage: React.FC = () => {
       {/* INDEPENDENT OWNER / BREEDER / BUYER / SHELTER - same flow */}
       {role !== 'vet' && step === 1 && <PetQuickAdd onBack={()=>setStep(0)} onNext={(d: any)=>{ go(d); setStep(2); }} />}
       {role !== 'vet' && step === 2 && <HeatTracker onBack={()=>setStep(1)} onNext={(d: any)=>{ go(d); setStep(3); }} />}
-      {role !== 'vet' && step === 3 && <SwipePreview onBack={()=>setStep(2)} onNext={()=> setStep(4)} />}
-      {role !== 'vet' && step === 4 && <Dashboard />}
+      {role !== 'vet' && step === 3 && <SwipePreview onBack={()=>setStep(2)} onNext={(d: any)=>{ go(d); setStep(4); }} />}
+      {role !== 'vet' && step === 4 && <Dashboard initialTab={data.initialTab || 'match'} />}
 
       {/* VET-ONLY FLOW */}
       {role === 'vet' && step === 1 && <VetIntro onBack={()=>setStep(0)} onNext={(d: any)=>{ go(d); setStep(2); }} />}
