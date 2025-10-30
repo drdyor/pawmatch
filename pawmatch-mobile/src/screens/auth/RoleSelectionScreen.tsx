@@ -1,204 +1,283 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
-import { colors } from '../../theme/colors';
-import { supabase } from '../../services/supabase';
-import { UserRole } from '../../types';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import { Colors, Spacing } from '../../constants/Colors';
 
-type RoleOption = {
-  id: UserRole;
+type UserRole = 'independent_owner' | 'breeder_professional' | 'buyer' | 'shelter' | 'vet';
+
+interface RoleOption {
+  role: UserRole;
+  emoji: string;
   title: string;
   description: string;
-  icon: string;
-  color: string;
-};
+  isPopular?: boolean;
+}
 
-const roles: RoleOption[] = [
+const ROLES: RoleOption[] = [
   {
-    id: 'buyer',
-    title: 'Buyer / Adopter',
-    description: 'Find your perfect pet companion',
-    icon: '🏠',
-    color: colors.buyer,
+    role: 'independent_owner',
+    emoji: '👤',
+    title: 'Independent Pet Owner',
+    description: 'I want to breed my pet once or twice (not a business)',
+    isPopular: true, // ⭐ EMPHASIZED!
   },
   {
-    id: 'breeder_independent',
-    title: 'Independent Breeder',
-    description: 'First-time or occasional breeding',
-    icon: '🐕',
-    color: colors.breeder,
+    role: 'breeder_professional',
+    emoji: '🐕',
+    title: 'Professional Breeder',
+    description: 'Registered kennel or breeding program',
   },
   {
-    id: 'breeder_registered',
-    title: 'Registered Breeder',
-    description: 'Professional kennel with license',
-    icon: '🏆',
-    color: colors.breeder,
+    role: 'buyer',
+    emoji: '❤️',
+    title: 'Looking for a Pet',
+    description: 'Find my perfect companion or breeding partner',
   },
   {
-    id: 'shelter',
-    title: 'Shelter / Rescue',
-    description: 'Manage adoptions and rescues',
-    icon: '❤️',
-    color: colors.shelter,
+    role: 'shelter',
+    emoji: '🏠',
+    title: 'Animal Shelter',
+    description: 'Manage animals and find loving homes for rescues',
   },
   {
-    id: 'vet',
+    role: 'vet',
+    emoji: '⚕️',
     title: 'Veterinarian',
-    description: 'Provide health services',
-    icon: '⚕️',
-    color: colors.vet,
+    description: 'Coordinate with pet owners and issue certificates',
   },
 ];
 
-export default function RoleSelectionScreen() {
+export default function RoleSelectionScreen({ navigation }: any) {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleContinue = async () => {
     if (!selectedRole) {
-      Alert.alert('Error', 'Please select a role');
+      Alert.alert('Please select a role', 'Choose your role to continue');
       return;
     }
 
     setLoading(true);
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // TODO: Save role to backend/firebase
+      // await updateProfile({ role: selectedRole });
       
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('users')
-        .update({ role: selectedRole })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      // Navigation will be handled by App.tsx auth listener
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+      // Navigate based on role
+      if (selectedRole === 'independent_owner' || selectedRole === 'breeder_professional') {
+        navigation.replace('BreederOnboardingIntro');
+      } else if (selectedRole === 'buyer') {
+        navigation.replace('BuyerPreferencesScreen');
+      } else {
+        // Default navigation
+        navigation.replace('Home');
+      }
+    } catch (error) {
+      console.error('Error updating role:', error);
+      Alert.alert('Error', 'Could not save role. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Choose Your Role</Text>
-        <Text style={styles.subtitle}>
-          Select how you'll use PawMatch. You can change this later.
-        </Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>I am a...</Text>
+          <Text style={styles.subtitle}>
+            Choose your role to personalize your experience
+          </Text>
 
-      <View style={styles.roles}>
-        {roles.map((role) => (
+          <View style={styles.rolesContainer}>
+            {ROLES.map((roleOption) => (
+              <TouchableOpacity
+                key={roleOption.role}
+                style={[
+                  styles.roleCard,
+                  selectedRole === roleOption.role && styles.roleCardSelected,
+                  roleOption.isPopular && styles.roleCardPopular,
+                ]}
+                onPress={() => setSelectedRole(roleOption.role)}
+              >
+                {roleOption.isPopular && (
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularText}>⭐ Most Common</Text>
+                  </View>
+                )}
+                
+                <View style={styles.roleHeader}>
+                  <Text style={styles.roleEmoji}>{roleOption.emoji}</Text>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      selectedRole === roleOption.role && styles.checkboxSelected,
+                    ]}
+                  >
+                    {selectedRole === roleOption.role && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                </View>
+                
+                <Text style={styles.roleTitle}>{roleOption.title}</Text>
+                <Text style={styles.roleDescription}>{roleOption.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <TouchableOpacity
-            key={role.id}
-            style={[
-              styles.roleCard,
-              selectedRole === role.id && { borderColor: role.color, borderWidth: 3 },
-            ]}
-            onPress={() => setSelectedRole(role.id)}
-            disabled={loading}
+            style={[styles.button, !selectedRole && styles.buttonDisabled]}
+            onPress={handleContinue}
+            disabled={!selectedRole || loading}
           >
-            <View style={styles.roleHeader}>
-              <Text style={styles.roleIcon}>{role.icon}</Text>
-              <View style={styles.roleInfo}>
-                <Text style={styles.roleTitle}>{role.title}</Text>
-                <Text style={styles.roleDescription}>{role.description}</Text>
-              </View>
-              {selectedRole === role.id && (
-                <Text style={styles.checkmark}>✓</Text>
-              )}
-            </View>
+            <Text style={styles.buttonText}>
+              {loading ? 'Continuing...' : 'Continue'}
+            </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleContinue}
-        disabled={loading || !selectedRole}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Setting up...' : 'Continue'}
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+          
+          <Text style={styles.helpText}>
+            Don't worry, you can change this later in settings
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
-    padding: 20,
-  },
-  header: {
-    marginTop: 60,
-    marginBottom: 30,
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 12,
+    color: Colors.text,
+    marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
-    lineHeight: 24,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xl,
   },
-  roles: {
-    gap: 16,
-    marginBottom: 30,
+  rolesContainer: {
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   roleCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
-    padding: 20,
+    padding: Spacing.lg,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: Colors.border,
+    position: 'relative',
+  },
+  roleCardSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: '#FFF9E6', // Light yellow tint
+  },
+  roleCardPopular: {
+    borderColor: Colors.primary,
+    borderWidth: 3,
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -10,
+    right: 12,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  popularText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.text,
   },
   roleHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 16,
+    marginBottom: Spacing.sm,
   },
-  roleIcon: {
-    fontSize: 36,
+  roleEmoji: {
+    fontSize: 40,
   },
-  roleInfo: {
-    flex: 1,
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  checkmark: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   roleTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 4,
   },
   roleDescription: {
     fontSize: 14,
-    color: colors.textSecondary,
-  },
-  checkmark: {
-    fontSize: 24,
-    color: colors.success,
+    color: Colors.textSecondary,
+    lineHeight: 20,
   },
   button: {
-    backgroundColor: colors.primary,
-    padding: 18,
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: Spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    backgroundColor: Colors.border,
   },
   buttonText: {
+    color: Colors.text,
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: '700',
+  },
+  helpText: {
+    textAlign: 'center',
+    color: Colors.textSecondary,
+    fontSize: 14,
+    marginTop: Spacing.md,
   },
 });
