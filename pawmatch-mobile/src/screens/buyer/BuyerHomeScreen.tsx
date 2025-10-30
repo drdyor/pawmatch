@@ -4,6 +4,8 @@ import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
 import { Pet, Listing } from '../../types';
 import PetCard from '../../components/PetCard';
+import BannerAd from '../../components/BannerAd';
+import { AD_PLACEMENTS } from '../../services/admob';
 
 export default function BuyerHomeScreen({ navigation }: any) {
   const [listings, setListings] = useState<(Listing & { pet: Pet })[]>([]);
@@ -172,14 +174,19 @@ export default function BuyerHomeScreen({ navigation }: any) {
           </View>
         ) : (
           <View style={styles.listingsGrid}>
-            {listings.map((listing) => (
-              <PetCard
-                key={listing.id}
-                pet={listing.pet}
-                onPress={() => navigation.navigate('PetDetail', { petId: listing.pet.id, listingId: listing.id })}
-                onFavorite={() => toggleFavorite(listing.pet.id)}
-                isFavorited={favorites.has(listing.pet.id)}
-              />
+            {listings.map((listing, index) => (
+              <React.Fragment key={listing.id}>
+                <PetCard
+                  pet={listing.pet}
+                  onPress={() => navigation.navigate('PetDetail', { petId: listing.pet.id, listingId: listing.id })}
+                  onFavorite={() => toggleFavorite(listing.pet.id)}
+                  isFavorited={favorites.has(listing.pet.id)}
+                />
+                {/* Show ad every 3 listings */}
+                {(index + 1) % 3 === 0 && (
+                  <BannerAd placement={AD_PLACEMENTS.BUYER_DISCOVER_FEED} />
+                )}
+              </React.Fragment>
             ))}
           </View>
         )}
