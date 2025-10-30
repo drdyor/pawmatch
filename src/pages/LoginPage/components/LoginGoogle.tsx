@@ -57,8 +57,18 @@ export const LoginGoogle: FC = () => {
         document.cookie = `token=${demoToken}; path=/`
         localStorage.setItem('demo_email', values.email)
         setSuccess(isSignup ? 'Account created!' : 'Logged in!')
+        
+        // Check if user has completed onboarding
+        const hasOnboarded = localStorage.getItem('user_onboarded')
+        
         setTimeout(() => {
-          window.location.href = '/discover'
+          if (isSignup || !hasOnboarded) {
+            // New user → go to onboarding
+            window.location.href = '/onboarding'
+          } else {
+            // Returning user → go straight to swipe
+            window.location.href = '/discover'
+          }
         }, 500)
       }, 1000)
     },
@@ -71,7 +81,10 @@ export const LoginGoogle: FC = () => {
       setTimeout(() => {
         const demoToken = 'demo_token_' + Date.now()
         document.cookie = `token=${demoToken}; path=/`
-        window.location.href = '/discover'
+        
+        // Check onboarding status
+        const hasOnboarded = localStorage.getItem('user_onboarded')
+        window.location.href = hasOnboarded ? '/discover' : '/onboarding'
       }, 500)
       return
     }

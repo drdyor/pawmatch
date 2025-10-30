@@ -11,6 +11,7 @@ import { CommunityPage } from './pages/CommunityPage'
 import { ComponentsUiPage } from './pages/ComponentsUiPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { InventoryPage } from './pages/InventoryPage'
+import { OnboardingPage } from './pages/OnboardingPage'
 import { ProfilePetPage } from './pages/ProfilePetPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SwipeDiscoverPage } from './pages/SwipeDiscoverPage'
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: '/dashboard',
         element: <DashboardPage />,
+      },
+      {
+        path: '/onboarding',
+        element: <OnboardingPage />,
       },
       {
         path: '/discover',
