@@ -22,6 +22,7 @@ import BreederPetsScreen from '../screens/breeder/BreederPetsScreen';
 import BreederMatchesScreen from '../screens/breeder/BreederMatchesScreen';
 import BreederProfileScreen from '../screens/breeder/BreederProfileScreen';
 import BreederCreateLitterScreen from '../screens/breeder/BreederCreateLitterScreen';
+import BreederHeatTrackingScreen from '../screens/breeder/BreederHeatTrackingScreen';
 
 // Shelter Screens
 import ShelterHomeScreen from '../screens/shelter/ShelterHomeScreen';
@@ -133,6 +134,7 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
               <>
                 <Stack.Screen name="BreederMain" component={BreederTabs} />
                 <Stack.Screen name="CreateLitter" component={BreederCreateLitterScreen} />
+                <Stack.Screen name="HeatTracking" component={BreederHeatTrackingScreen} />
               </>
             )}
             {userRole === 'shelter' && (
