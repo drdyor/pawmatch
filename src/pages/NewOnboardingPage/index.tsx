@@ -1,8 +1,14 @@
 import React, { useMemo, useState } from "react";
 
 /**
- * PawMatch – Independent Breeder Onboarding (Your bolt.new UI)
- * Fixed with role-based routing logic
+ * PawMatch – Role-Aware Onboarding (Interactive Mock)
+ * ---------------------------------------------------
+ * Fixes & improvements based on feedback:
+ * 1) Removed any external icon/CDN deps → tiny emoji icon set
+ * 2) Role-based flows. **Vets get their own workflow** (no voting/heat tracking)
+ * 3) Buyers/Independent owners: Role → Pet → Heat → Swipe → Dashboard
+ * 4) Vets: Role → Clinic → Patients → Certificates → Dashboard
+ * 5) Added health badges, owner consent capture, certificate request builder
  */
 
 // --- Tiny in-file Icon system (emoji-based) ---
@@ -37,6 +43,9 @@ const I = {
   Bell: (p: any) => <Icon glyph="🔔" label="bell" {...p} />, 
   PlusCircle: (p: any) => <Icon glyph="➕" label="plus" {...p} />, 
   Info: (p: any) => <Icon glyph="ℹ️" label="info" {...p} />,
+  Clinic: (p: any) => <Icon glyph="🏥" label="clinic" {...p} />,
+  Location: (p: any) => <Icon glyph="🗺️" label="location" {...p} />,
+  File: (p: any) => <Icon glyph="📄" label="file" {...p} />,
 };
 
 // --- Health badges ---
@@ -78,7 +87,7 @@ const Mobile = ({ children }: any) => (
   </div>
 );
 
-const Header = ({ step, max, onBack }: any) => (
+const Header = ({ step, max, onBack, title = "Onboarding" }: any) => (
   <div className="px-5 pt-8 pb-3">
     <div className="flex items-center gap-3">
       {onBack ? (
@@ -89,7 +98,7 @@ const Header = ({ step, max, onBack }: any) => (
         <div className="w-9" />
       )}
       <div className="flex-1">
-        <div className="text-xs tracking-wide text-neutral-500">Onboarding</div>
+        <div className="text-xs tracking-wide text-neutral-500">{title}</div>
         <div className="h-2 w-full bg-neutral-100 rounded-full mt-2">
           <div
             className="h-2 bg-amber-500 rounded-full transition-all"
@@ -137,9 +146,9 @@ const Toggle = ({ checked, onChange, label, sub }: any) => (
   </button>
 );
 
+// --- Role select ---
 function RoleSelect({ onNext }: any) {
   const [role, setRole] = useState("independent");
-
   const items = [
     { key: "independent", label: "Independent Owner", icon: I.PawPrint, desc: "Breed once or twice, find matches nearby" },
     { key: "breeder", label: "Professional Breeder", icon: I.Users2, desc: "Studs, litters, records & analytics" },
@@ -150,7 +159,7 @@ function RoleSelect({ onNext }: any) {
 
   return (
     <>
-      <Header step={1} max={5} />
+      <Header step={1} max={5} title="Onboarding" />
       <div className="px-5 pb-6 pt-2">
         <div className="flex items-center gap-2 mb-4">
           <I.PawPrint className="h-6 w-6 text-amber-600" />
@@ -186,107 +195,15 @@ function RoleSelect({ onNext }: any) {
   );
 }
 
-function BuyerPreferences({ onNext, onBack }: any) {
-  const [prefs, setPrefs] = useState({
-    species: 'Dog',
-    size: [] as string[],
-    age: [] as string[],
-    distance: '10',
-  });
-
-  const toggleSize = (size: string) => {
-    setPrefs(p => ({
-      ...p,
-      size: p.size.includes(size) ? p.size.filter(s => s !== size) : [...p.size, size]
-    }));
-  };
-
-  const toggleAge = (age: string) => {
-    setPrefs(p => ({
-      ...p,
-      age: p.age.includes(age) ? p.age.filter(a => a !== age) : [...p.age, age]
-    }));
-  };
-
-  return (
-    <>
-      <Header step={2} max={3} onBack={onBack} />
-      <div className="px-5 pb-6 pt-2">
-        <h2 className="text-lg font-semibold mb-2">What are you looking for?</h2>
-        <p className="text-neutral-600 mb-4">
-          Set your preferences to find your perfect pet match.
-        </p>
-
-        <Card className="p-4 mb-4 space-y-4">
-          <div>
-            <div className="text-sm text-neutral-600 mb-2">I'm looking for</div>
-            <div className="flex gap-2">
-              <Chip active={prefs.species==='Dog'} onClick={()=>setPrefs({...prefs, species:'Dog'})} icon={I.Dog}>Dog</Chip>
-              <Chip active={prefs.species==='Cat'} onClick={()=>setPrefs({...prefs, species:'Cat'})} icon={I.Cat}>Cat</Chip>
-              <Chip active={prefs.species==='Both'} onClick={()=>setPrefs({...prefs, species:'Both'})}>Either</Chip>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sm text-neutral-600 mb-2">Size preference</div>
-            <div className="flex flex-wrap gap-2">
-              {['Small', 'Medium', 'Large'].map(size => (
-                <Chip key={size} active={prefs.size.includes(size)} onClick={() => toggleSize(size)}>
-                  {size}
-                </Chip>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sm text-neutral-600 mb-2">Age preference</div>
-            <div className="flex flex-wrap gap-2">
-              {['Puppy', 'Young (1-3y)', 'Adult (3-7y)', 'Senior (7y+)'].map(age => (
-                <Chip key={age} active={prefs.age.includes(age)} onClick={() => toggleAge(age)}>
-                  {age}
-                </Chip>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sm text-neutral-600 mb-2">
-              Search radius: {prefs.distance} km
-            </div>
-            <input 
-              type="range" 
-              min="5" 
-              max="50" 
-              value={prefs.distance}
-              onChange={(e) => setPrefs({...prefs, distance: e.target.value})}
-              className="w-full accent-amber-500"
-            />
-          </div>
-        </Card>
-
-        <button onClick={() => onNext({ preferences: prefs })} className="w-full py-3 rounded-2xl bg-amber-500 text-white font-medium shadow-sm hover:bg-amber-600">
-          Find My Perfect Pet
-        </button>
-      </div>
-    </>
-  );
-}
-
+// --- Independent owner flow ---
 function PetQuickAdd({ onNext, onBack }: any) {
   const [pets, setPets] = useState<any[]>([]);
-  const [draft, setDraft] = useState({ 
-    name: "", 
-    species: "Dog", 
-    breed: "", 
-    age: "3", 
-    temperament: [] as string[], 
-    badges: { vaccinated: true, dna: false } 
-  });
-
+  const [draft, setDraft] = useState({ name: "", species: "Dog", breed: "", age: "3", temperament: [] as string[], badges: { vaccinated: true, dna: false } });
+  
   const toggleTemperament = (t: string) => {
     setDraft((d) => ({ ...d, temperament: d.temperament.includes(t) ? d.temperament.filter((x) => x !== t) : [...d.temperament, t] }));
   };
-
+  
   const addPet = () => {
     if (!draft.name) return;
     setPets((p) => [...p, { ...draft }]);
@@ -295,7 +212,7 @@ function PetQuickAdd({ onNext, onBack }: any) {
 
   return (
     <>
-      <Header step={2} max={5} onBack={onBack} />
+      <Header step={2} max={5} onBack={onBack} title="Independent Owner" />
       <div className="px-5 pb-6 pt-2 max-h-[700px] overflow-y-auto">
         <h2 className="text-lg font-semibold mb-2">Add your pet(s)</h2>
         <p className="text-neutral-600 mb-4">Create quick profiles now—you can refine later.</p>
@@ -384,11 +301,11 @@ function PetQuickAdd({ onNext, onBack }: any) {
 }
 
 function computeFertileWindow(start = 1) {
-  return new Set([8,9,10,11,12,13,14].map((d)=>d));
+  return new Set([8,9,10,11,12,13,14]);
 }
 
-function percentCycle(day: number, length: number) {
-  return Math.max(0, Math.min(1, day / length));
+function percentCycle(day: number, length: number) { 
+  return Math.max(0, Math.min(1, day / length)); 
 }
 
 function HeatTracker({ onNext, onBack }: any) {
@@ -400,7 +317,7 @@ function HeatTracker({ onNext, onBack }: any) {
 
   return (
     <>
-      <Header step={3} max={5} onBack={onBack} />
+      <Header step={3} max={5} onBack={onBack} title="Independent Owner" />
       <div className="px-5 pb-6 pt-2">
         <div className="flex items-center gap-2 mb-2">
           <I.Calendar className="h-5 w-5 text-amber-600"/>
@@ -460,7 +377,7 @@ function SwipePreview({ onNext, onBack }: any) {
 
   return (
     <>
-      <Header step={4} max={5} onBack={onBack} />
+      <Header step={4} max={5} onBack={onBack} title="Independent Owner" />
       <div className="px-5 pb-6 pt-2">
         <h2 className="text-lg font-semibold mb-2">Swipe preview</h2>
         <p className="text-neutral-600 mb-4">Right = interested · Left = pass</p>
@@ -504,7 +421,7 @@ function SwipePreview({ onNext, onBack }: any) {
               <div className="text-center">
                 <I.Heart className="h-8 w-8 text-rose-500 mx-auto"/>
                 <h3 className="text-lg font-semibold mt-2">It's a match!</h3>
-                <p className="text-sm text-neutral-600 mt-1">Open chat with Max's owner and choose an arrangement:</p>
+                <p className="text-sm text-neutral-600 mt-1">Open chat and choose an arrangement:</p>
                 <div className="grid grid-cols-1 gap-2 mt-3 text-left">
                   <Toggle checked={false} onChange={()=>{}} label="Pick of litter"/>
                   <Toggle checked={false} onChange={()=>{}} label="Split puppies 50/50"/>
@@ -588,45 +505,194 @@ function Dashboard() {
   );
 }
 
+// --- Vet flow ---
+function VetIntro({ onNext, onBack }: any) {
+  const [clinic, setClinic] = useState({ name: "", address: "", city: "", phone: "", vetName: "" });
+  
+  return (
+    <>
+      <Header step={2} max={4} onBack={onBack} title="Vet / Clinic" />
+      <div className="px-5 pb-6 pt-2">
+        <div className="flex items-center gap-2 mb-2">
+          <I.Clinic className="h-5 w-5 text-amber-600"/>
+          <h2 className="text-lg font-semibold">Clinic details</h2>
+        </div>
+        <p className="text-neutral-600 mb-4">Set up your clinic profile so owners can connect and request certificates.</p>
+        <Card className="p-4 mb-4 grid grid-cols-1 gap-3">
+          <label className="text-sm">
+            Clinic name
+            <input className="mt-1 w-full rounded-xl border px-3 py-2" value={clinic.name} onChange={(e)=>setClinic({...clinic,name:e.target.value})}/>
+          </label>
+          <label className="text-sm">
+            Lead vet name
+            <input className="mt-1 w-full rounded-xl border px-3 py-2" value={clinic.vetName} onChange={(e)=>setClinic({...clinic,vetName:e.target.value})}/>
+          </label>
+          <label className="text-sm">
+            Address
+            <input className="mt-1 w-full rounded-xl border px-3 py-2" value={clinic.address} onChange={(e)=>setClinic({...clinic,address:e.target.value})}/>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-sm">
+              City
+              <input className="mt-1 w-full rounded-xl border px-3 py-2" value={clinic.city} onChange={(e)=>setClinic({...clinic,city:e.target.value})}/>
+            </label>
+            <label className="text-sm">
+              Phone
+              <input className="mt-1 w-full rounded-xl border px-3 py-2" value={clinic.phone} onChange={(e)=>setClinic({...clinic,phone:e.target.value})}/>
+            </label>
+          </div>
+        </Card>
+        <button onClick={()=>onNext({ clinic })} className="w-full py-3 rounded-2xl bg-amber-500 text-white font-medium">Continue</button>
+      </div>
+    </>
+  );
+}
+
+function VetPatients({ onNext, onBack }: any) {
+  const [patients, setPatients] = useState<any[]>([]);
+  const [draft, setDraft] = useState({ ownerName:"", petName:"", species:"Dog", breed:"", dob:"", consent:false });
+  
+  return (
+    <>
+      <Header step={3} max={4} onBack={onBack} title="Vet / Clinic" />
+      <div className="px-5 pb-6 pt-2 max-h-[700px] overflow-y-auto">
+        <div className="flex items-center gap-2 mb-2"><I.Dog className="h-5 w-5 text-amber-600"/><h2 className="text-lg font-semibold">Add patient</h2></div>
+        <p className="text-neutral-600 mb-4">Patients stay with your clinic. Certificates require owner consent.</p>
+        <Card className="p-4 mb-4 grid grid-cols-1 gap-3">
+          <label className="text-sm">
+            Owner name
+            <input className="mt-1 w-full rounded-xl border px-3 py-2" value={draft.ownerName} onChange={(e)=>setDraft({...draft,ownerName:e.target.value})}/>
+          </label>
+          <label className="text-sm">
+            Pet name
+            <input className="mt-1 w-full rounded-xl border px-3 py-2" value={draft.petName} onChange={(e)=>setDraft({...draft,petName:e.target.value})}/>
+          </label>
+          <div className="flex gap-2">
+            <Chip active={draft.species==='Dog'} onClick={()=>setDraft({...draft,species:'Dog'})} icon={I.Dog}>Dog</Chip>
+            <Chip active={draft.species==='Cat'} onClick={()=>setDraft({...draft,species:'Cat'})} icon={I.Cat}>Cat</Chip>
+          </div>
+          <label className="text-sm">
+            Breed
+            <input className="mt-1 w-full rounded-xl border px-3 py-2" value={draft.breed} onChange={(e)=>setDraft({...draft,breed:e.target.value})}/>
+          </label>
+          <label className="text-sm">
+            Date of birth
+            <input className="mt-1 w-full rounded-xl border px-3 py-2" placeholder="YYYY-MM-DD" value={draft.dob} onChange={(e)=>setDraft({...draft,dob:e.target.value})}/>
+          </label>
+          <Toggle checked={draft.consent} onChange={(v: boolean)=>setDraft({...draft, consent:v})} label="Owner consent on file" sub="Required to issue certificates or share data"/>
+          <button className="mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-xl border" onClick={()=>{ 
+            if(!draft.petName || !draft.ownerName) return; 
+            setPatients(p=>[...p,draft]); 
+            setDraft({ ownerName:"", petName:"", species:"Dog", breed:"", dob:"", consent:false }); 
+          }}>
+            <I.PlusCircle className="h-4 w-4"/> Add patient
+          </button>
+        </Card>
+        {patients.length>0 && (
+          <Card className="p-4 mb-4">
+            <div className="font-semibold text-sm mb-2">Clinic patients</div>
+            <div className="space-y-2">
+              {patients.map((p,i)=> (
+                <div key={i} className="p-3 rounded-xl border text-sm flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{p.petName} · {p.breed || p.species}</div>
+                    <div className="text-neutral-500 text-xs">Owner: {p.ownerName} · DOB {p.dob || '—'} · {p.consent? 'Consent ✓':'Consent ×'}</div>
+                  </div>
+                  <span className={`text-xs ${p.consent?'text-emerald-600':'text-rose-600'}`}>{p.consent? 'Ready':'Consent needed'}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+        <button onClick={()=>onNext({ patients })} className="w-full py-3 rounded-2xl bg-amber-500 text-white font-medium">Continue</button>
+      </div>
+    </>
+  );
+}
+
+function VetCertificateRequest({ onNext, onBack, patients = [] }: any) {
+  const CERTS = [
+    { key:'vet_checked', label:'Vet health check' },
+    { key:'vaccinated', label:'Vaccination certificate' },
+    { key:'hip_score', label:'Hip score clear' },
+    { key:'dna_tested', label:'DNA tested' },
+    { key:'fiv_felv', label:'FIV/FeLV negative (cats)' },
+  ];
+  const [selPatient, setSelPatient] = useState(0);
+  const [selected, setSelected] = useState(new Set<string>());
+  const toggle = (k: string) => setSelected(s=>{ const n=new Set(s); n.has(k)?n.delete(k):n.add(k); return n; });
+
+  return (
+    <>
+      <Header step={4} max={4} onBack={onBack} title="Vet / Clinic" />
+      <div className="px-5 pb-6 pt-2">
+        <div className="flex items-center gap-2 mb-2"><I.File className="h-5 w-5 text-amber-600"/><h2 className="text-lg font-semibold">Request certificates</h2></div>
+        <p className="text-neutral-600 mb-4">Issue official certificates for mating. Select patient and documents.</p>
+
+        <Card className="p-4 mb-4">
+          <div className="text-sm text-neutral-600 mb-2">Patient</div>
+          <select className="w-full rounded-xl border px-3 py-2" value={selPatient} onChange={(e)=>setSelPatient(Number(e.target.value))}>
+            {patients.map((p: any,i: number)=> <option key={i} value={i}>{p.petName} — {p.ownerName}</option>)}
+          </select>
+          <div className="text-sm text-neutral-600 mt-4 mb-2">Certificates</div>
+          <div className="grid grid-cols-1 gap-2">
+            {CERTS.map(c=> (
+              <Toggle key={c.key} checked={selected.has(c.key)} onChange={()=>toggle(c.key)} label={c.label} />
+            ))}
+          </div>
+        </Card>
+
+        <button onClick={()=>onNext({ request:{ patient: patients[selPatient], certs:[...selected] } })} className="w-full py-3 rounded-2xl bg-amber-500 text-white font-medium">Create request</button>
+      </div>
+    </>
+  );
+}
+
+function VetDashboard() {
+  return (
+    <div className="h-[800px]">
+      <div className="px-5 pt-10 pb-3">
+        <div className="flex items-center gap-2"><I.Stethoscope className="h-6 w-6 text-amber-600"/><h1 className="text-xl font-semibold">Clinic Dashboard</h1></div>
+        <div className="text-sm text-neutral-600 mt-1">Manage patients, certificates and reminders.</div>
+      </div>
+      <div className="px-5 pb-10 space-y-3">
+        <Card className="p-4"><div className="font-semibold mb-1">Today</div><div className="text-sm text-neutral-600">No pending certificate requests.</div></Card>
+        <Card className="p-4">
+          <div className="font-semibold mb-1">Getting started</div>
+          <ul className="list-disc pl-5 text-sm text-neutral-600 space-y-1">
+            <li>Add patients with consent</li>
+            <li>Issue health/vaccination/DNA/hip score certificates</li>
+            <li>Connect with owners for mating readiness</li>
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// --- App root ---
 export const NewOnboardingPage: React.FC = () => {
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<any>({ role: null });
+  const [data, setData] = useState<any>({});
+  const role = (data && data.role) || null;
 
-  // Role-based routing logic
-  const getFlow = (role: string | null) => {
-    if (role === 'buyer') {
-      return ['RoleSelect', 'BuyerPreferences', 'SwipePreview', 'Dashboard'];
-    }
-    if (role === 'shelter' || role === 'vet') {
-      // Shelter/Vet: just role → dashboard (simplified for now)
-      return ['RoleSelect', 'Dashboard'];
-    }
-    // Default: Independent/Breeder
-    return ['RoleSelect', 'PetQuickAdd', 'HeatTracker', 'SwipePreview', 'Dashboard'];
-  };
-
-  const flow = getFlow(data.role);
-  const currentScreen = flow[step];
-  const maxSteps = flow.length;
+  const go = (d: any)=> setData((prev: any)=> ({...prev, ...d}));
 
   return (
     <Mobile>
-      {currentScreen === 'RoleSelect' && (
-        <RoleSelect onNext={(d: any) => { setData({...data, ...d}); setStep(1); }} />
-      )}
-      {currentScreen === 'BuyerPreferences' && (
-        <BuyerPreferences onBack={() => setStep(0)} onNext={(d: any) => { setData({...data, ...d}); setStep(2); }} />
-      )}
-      {currentScreen === 'PetQuickAdd' && (
-        <PetQuickAdd onBack={() => setStep(0)} onNext={(d: any) => { setData({...data, ...d}); setStep(2); }} />
-      )}
-      {currentScreen === 'HeatTracker' && (
-        <HeatTracker onBack={() => setStep(step - 1)} onNext={(d: any) => { setData({...data, ...d}); setStep(step + 1); }} />
-      )}
-      {currentScreen === 'SwipePreview' && (
-        <SwipePreview onBack={() => setStep(step - 1)} onNext={() => setStep(step + 1)} />
-      )}
-      {currentScreen === 'Dashboard' && <Dashboard />}
+      {step === 0 && <RoleSelect onNext={(d: any)=>{ go(d); setStep(1); }} />}
+
+      {/* INDEPENDENT OWNER / BREEDER / BUYER / SHELTER - same flow */}
+      {role !== 'vet' && step === 1 && <PetQuickAdd onBack={()=>setStep(0)} onNext={(d: any)=>{ go(d); setStep(2); }} />}
+      {role !== 'vet' && step === 2 && <HeatTracker onBack={()=>setStep(1)} onNext={(d: any)=>{ go(d); setStep(3); }} />}
+      {role !== 'vet' && step === 3 && <SwipePreview onBack={()=>setStep(2)} onNext={()=> setStep(4)} />}
+      {role !== 'vet' && step === 4 && <Dashboard />}
+
+      {/* VET-ONLY FLOW */}
+      {role === 'vet' && step === 1 && <VetIntro onBack={()=>setStep(0)} onNext={(d: any)=>{ go(d); setStep(2); }} />}
+      {role === 'vet' && step === 2 && <VetPatients onBack={()=>setStep(1)} onNext={(d: any)=>{ go(d); setStep(3); }} />}
+      {role === 'vet' && step === 3 && <VetCertificateRequest patients={data.patients||[]} onBack={()=>setStep(2)} onNext={(d: any)=>{ go(d); setStep(4); }} />}
+      {role === 'vet' && step === 4 && <VetDashboard />}
     </Mobile>
   );
 };
