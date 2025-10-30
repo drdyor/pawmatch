@@ -19,6 +19,7 @@ import { SwipeDiscoverPage } from './pages/SwipeDiscoverPage'
 import { UserProfilePage } from './pages/UserProfilePage'
 import { VotingPage } from './pages/VotingPage'
 import { MessagesPage } from './pages/MessagesPage'
+import { DebugPage } from './pages/DebugPage'
 import { AppContext, AppContextProps } from './services/AppContext'
 
 import './api/axiosInstance'
@@ -92,6 +93,10 @@ const router = createBrowserRouter([
       {
         path: '/expense',
         element: <ExpensePage />,
+      },
+      {
+        path: '/debug',
+        element: <DebugPage />,
       },
       {
         path: '/',
