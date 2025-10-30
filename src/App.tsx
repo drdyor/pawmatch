@@ -16,6 +16,7 @@ import { ProfilePetPage } from './pages/ProfilePetPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SwipeDiscoverPage } from './pages/SwipeDiscoverPage'
 import { UserProfilePage } from './pages/UserProfilePage'
+import { VotingPage } from './pages/VotingPage'
 import { AppContext, AppContextProps } from './services/AppContext'
 
 import './api/axiosInstance'
