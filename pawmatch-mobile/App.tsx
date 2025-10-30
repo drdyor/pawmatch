@@ -3,18 +3,21 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
+import { OnboardingFlow } from './src/screens/onboarding/OnboardingFlow';
 import { supabase, isDemoMode } from './src/services/supabase';
 import { User } from './src/types';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
   useEffect(() => {
-    // In demo mode, skip auth and go straight to app
+    // In demo mode, show onboarding first
     if (isDemoMode) {
-      console.log('🎉 Running in DEMO MODE - No Supabase needed!');
+      console.log('🎉 Running in DEMO MODE - Showing new onboarding!');
       setLoading(false);
+      setShowOnboarding(true);
       return;
     }
 
@@ -24,10 +27,12 @@ export default function App() {
         fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
+        setShowOnboarding(true); // Show onboarding for new users
       }
     }).catch((error) => {
       console.error('Auth error:', error);
       setLoading(false);
+      setShowOnboarding(true);
     });
 
     // Listen for auth changes
@@ -39,6 +44,7 @@ export default function App() {
       } else {
         setUser(null);
         setLoading(false);
+        setShowOnboarding(true);
       }
     });
 
@@ -55,8 +61,11 @@ export default function App() {
 
       if (error) throw error;
       setUser(data);
+      // If user exists and has completed onboarding, skip onboarding
+      setShowOnboarding(!data || !data.role);
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      setShowOnboarding(true);
     } finally {
       setLoading(false);
     }
@@ -66,6 +75,22 @@ export default function App() {
     return null; // TODO: Add splash screen
   }
 
+  // Show new onboarding flow
+  if (showOnboarding) {
+    return (
+      <SafeAreaProvider>
+        <OnboardingFlow
+          onComplete={(data) => {
+            console.log('Onboarding completed:', data);
+            setShowOnboarding(false);
+          }}
+        />
+        <StatusBar style="auto" />
+      </SafeAreaProvider>
+    );
+  }
+
+  // Show main app after onboarding
   return (
     <SafeAreaProvider>
       <AppNavigator userRole={user?.role || null} />
