@@ -13,6 +13,7 @@ import {
 import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
 import { Message } from '../../types';
+import { checkMessageSafety, getSafetyMessage } from '../../services/chatSafety';
 
 export default function ChatThreadScreen({ navigation, route }: any) {
   const { conversationId, otherUserId, otherUserName } = route.params;
@@ -103,6 +104,34 @@ export default function ChatThreadScreen({ navigation, route }: any) {
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentUserId) return;
 
+    // Safety check
+    const safety = checkMessageSafety(newMessage.trim());
+    
+    if (safety.blocked) {
+      Alert.alert(
+        '⚠️ Message Blocked',
+        getSafetyMessage(safety.warnings),
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    if (safety.warnings.length > 0) {
+      Alert.alert(
+        'Safety Notice',
+        getSafetyMessage(safety.warnings) + '\n\nDo you still want to send this message?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Send Anyway', onPress: () => doSendMessage() },
+        ]
+      );
+      return;
+    }
+    
+    await doSendMessage();
+  };
+
+  const doSendMessage = async () => {
     setSending(true);
     try {
       const { error } = await supabase.from('messages').insert({
