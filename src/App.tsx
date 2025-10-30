@@ -22,7 +22,8 @@ import { MessagesPage } from './pages/MessagesPage'
 import { DebugPage } from './pages/DebugPage'
 import { AppContext, AppContextProps } from './services/AppContext'
 
-import './api/axiosInstance'
+// Disabled axios instance - causes global error in production
+// import './api/axiosInstance'
 import { ExpensePage } from './pages/ExpensePage'
 
 interface Props {
