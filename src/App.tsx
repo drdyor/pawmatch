@@ -42,10 +42,14 @@ const router = createBrowserRouter([
         path: '/onboarding',
         element: <OnboardingPage />,
       },
-      {
-        path: '/discover',
-        element: <SwipeDiscoverPage />,
-      },
+            {
+              path: '/discover',
+              element: <SwipeDiscoverPage />,
+            },
+            {
+              path: '/voting',
+              element: <VotingPage />,
+            },
       {
         path: '/pet/:id',
         element: <ProfilePetPage />,

@@ -1,0 +1,303 @@
+.voting-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  margin-bottom: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.voting-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.voting-card-photo {
+  width: 100%;
+  height: 200px;
+  background: #F8F9FA;
+  position: relative;
+  overflow: hidden;
+}
+
+.voting-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.voting-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  background: linear-gradient(135deg, #FFC700 0%, #FF9500 100%);
+}
+
+.voting-card-content {
+  padding: 16px;
+}
+
+.voting-card-info {
+  margin-bottom: 12px;
+}
+
+.voting-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1C1E21;
+  margin: 0 0 4px 0;
+}
+
+.voting-card-breed {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0;
+}
+
+.voting-card-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.voting-card-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voting-card-fire {
+  font-size: 20px;
+}
+
+.voting-card-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1C1E21;
+}
+
+.voting-card-label {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.voting-card-button {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: #F8F9FA;
+  border: 1px solid #E5E7EB;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.voting-card-button:hover {
+  border-color: #FFC700;
+  background: #FFF9E6;
+}
+
+.voting-card-button-active {
+  background: #FFF9E6;
+  border-color: #FFC700;
+  color: #1C1E21;
+}
+
+/* Pair Voting Card Styles */
+.pair-voting-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid #FFC700;
+  margin-bottom: 16px;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pair-voting-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 199, 0, 0.2);
+}
+
+.pair-voting-photos {
+  display: flex;
+  height: 150px;
+  position: relative;
+}
+
+.pair-photo {
+  flex: 1;
+  background: #F8F9FA;
+  position: relative;
+}
+
+.pair-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pair-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  background: linear-gradient(135deg, #FFC700 0%, #FF9500 100%);
+}
+
+.pair-heart-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.pair-heart {
+  font-size: 24px;
+}
+
+.pair-voting-content {
+  padding: 16px;
+}
+
+.pair-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1C1E21;
+  text-align: center;
+  margin: 0 0 4px 0;
+}
+
+.pair-breeds {
+  font-size: 14px;
+  color: #6B7280;
+  text-align: center;
+  margin: 0 0 12px 0;
+}
+
+.pair-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+
+.pair-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pair-stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1C1E21;
+}
+
+.pair-stat-preorder {
+  color: #34C759;
+}
+
+.pair-stat-label {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.pair-vote-button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: #F8F9FA;
+  border: 1px solid #E5E7EB;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pair-vote-button:hover {
+  background: #FFC700;
+  border-color: #FFC700;
+  color: #1C1E21;
+}
+
+.commitment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commitment-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1C1E21;
+  text-align: center;
+  margin: 0 0 4px 0;
+}
+
+.commitment-button {
+  padding: 10px;
+  border-radius: 12px;
+  background: #F8F9FA;
+  border: 1px solid #E5E7EB;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.commitment-button:hover {
+  border-color: #FFC700;
+  background: #FFF9E6;
+}
+
+.commitment-button-primary {
+  background: #FFC700;
+  border-color: #FFC700;
+  color: #1C1E21;
+}
+
+.commitment-button-primary:hover {
+  background: #FFD700;
+}
+
+.trending-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #FF3B30;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .voting-card-photo {
+    height: 160px;
+  }
+  
+  .pair-voting-photos {
+    height: 120px;
+  }
+}
