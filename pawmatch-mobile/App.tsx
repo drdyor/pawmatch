@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View, Text, ActivityIndicator } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
-import { supabase } from './src/services/supabase';
+import { supabase, isDemoMode } from './src/services/supabase';
 import { User } from './src/types';
 
 export default function App() {
@@ -10,6 +11,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // In demo mode, skip auth and go straight to app
+    if (isDemoMode) {
+      console.log('🎉 Running in DEMO MODE - No Supabase needed!');
+      setLoading(false);
+      return;
+    }
+
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -17,6 +25,9 @@ export default function App() {
       } else {
         setLoading(false);
       }
+    }).catch((error) => {
+      console.error('Auth error:', error);
+      setLoading(false);
     });
 
     // Listen for auth changes
