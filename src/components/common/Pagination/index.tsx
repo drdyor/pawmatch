@@ -39,9 +39,9 @@ export const Pagination: FC<Props> = ({ page, take, total, setPage }) => {
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-gray-700">
-            {t('common:showing')} <span className="font-medium">{page}</span>{' '}
-            {t('common:to')} <span className="font-medium">{take}</span>{' '}
-            {t('common:of')} <span className="font-medium">{total}</span>{' '}
+            {t('common:showing')} <span className="font-medium">{Math.max(1, (page - 1) * take + 1)}</span>{' '}
+            {t('common:to')} <span className="font-medium">{Math.min(page * take, total || 0)}</span>{' '}
+            {t('common:of')} <span className="font-medium">{total || 0}</span>{' '}
             {t('common:results')}
           </p>
         </div>
