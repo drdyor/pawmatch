@@ -9,7 +9,7 @@ axios.defaults.baseURL = '/'
 axios.interceptors.request.use(
   (config) => {
     const token = getCookie('token')
-    if (token) {
+    if (token && config.headers) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
     return config
