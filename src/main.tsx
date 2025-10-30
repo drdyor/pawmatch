@@ -1,4 +1,5 @@
-import axios from 'axios'
+// Disabled axios import - causes global error in production  
+// import axios from 'axios'
 import { observable } from 'mobx'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -78,13 +79,19 @@ async function main() {
         throw new Error('Demo mode - no backend')
       }
 
-      const { data } = await axios.get('/api/auth/login/', {
-        withCredentials: true,
-        timeout: 5000,
+      // Use fetch instead of axios to avoid global error
+      const response = await fetch('/api/auth/login/', {
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
         },
       })
+      
+      if (!response.ok) {
+        throw new Error('Auth failed')
+      }
+      
+      const data = await response.json()
 
       appContext = observable({
         session: { token: token },
