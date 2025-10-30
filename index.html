@@ -6,6 +6,12 @@
     <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMatch - Find Your Perfect Pet</title>
+    <script>
+      // Polyfill global for axios and other dependencies
+      if (typeof global === 'undefined') {
+        window.global = window;
+      }
+    </script>
 </head>
 
 <body>
