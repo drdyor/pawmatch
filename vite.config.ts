@@ -31,9 +31,6 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Force axios to use browser build
-      'axios': 'axios/dist/esm/axios.js',
-      // App aliases
       components: path.resolve(projectRoot, 'src/components/common/'),
       constants: path.resolve(projectRoot, 'src/constants/'),
       hooks: path.resolve(projectRoot, 'src/hooks/'),
@@ -44,8 +41,5 @@ export default defineConfig({
       utils: path.resolve(projectRoot, 'src/utils/'),
       contracts: path.resolve(projectRoot, 'src/contracts/'),
     },
-  },
-  optimizeDeps: {
-    include: ['axios'],
   },
 })
