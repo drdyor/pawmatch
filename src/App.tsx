@@ -12,6 +12,7 @@ import { ComponentsUiPage } from './pages/ComponentsUiPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { OnboardingPage } from './pages/OnboardingPage'
+import { NewOnboardingPage } from './pages/NewOnboardingPage'
 import { ProfilePetPage } from './pages/ProfilePetPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SwipeDiscoverPage } from './pages/SwipeDiscoverPage'
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
             {
               path: '/voting',
               element: <VotingPage />,
+            },
+            {
+              path: '/onboarding-new',
+              element: <NewOnboardingPage />,
             },
       {
         path: '/pet/:id',
