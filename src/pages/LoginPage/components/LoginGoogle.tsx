@@ -11,10 +11,13 @@ import { BaseButton } from '../../../components/common/BaseButton'
 import { BaseInput } from '../../../components/common/BaseInput'
 import { BaseLoading } from '../../../components/common/BaseLoading'
 
+const IS_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true' || !import.meta.env.VITE_API_URL
+
 export const LoginGoogle: FC = () => {
   const [successEmailLogin, setSuccessEmailLogin] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isSignup, setIsSignup] = useState(false)
+  const [error, setError] = useState('')
   const urlParams = new URLSearchParams(window.location.search)
   const token = urlParams.get('token')
   const { t } = useTranslation(['common', 'login'])
@@ -41,30 +44,63 @@ export const LoginGoogle: FC = () => {
       email: '',
     },
     onSubmit: async (values) => {
-      loginEmailCallback(values.email)
+      if (IS_DEMO_MODE) {
+        handleDemoLogin()
+      } else {
+        loginEmailCallback(values.email)
+      }
       formik.resetForm()
     },
   })
 
+  const handleDemoLogin = () => {
+    // Create a demo token and redirect
+    const demoToken = 'demo_token_' + Date.now()
+    document.cookie = `token=${demoToken}; path=/`
+    setLoading(true)
+    setTimeout(() => {
+      window.location.href = '/discover'
+    }, 500)
+  }
+
   const signInWithGoogle = async () => {
-    const { data } = await axios.get('/api/auth/google/')
-    location.href = data?.location
+    if (IS_DEMO_MODE) {
+      handleDemoLogin()
+      return
+    }
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || ''
+      const { data } = await axios.get(`${apiUrl}/api/auth/google/`)
+      location.href = data?.location
+    } catch (err) {
+      setError('Backend API not available. Try demo mode!')
+      console.error(err)
+    }
   }
 
   const signInWithApple = async () => {
-    // TODO: Implement Apple Sign In
-    console.log('Apple Sign In - Coming soon!')
+    if (IS_DEMO_MODE) {
+      handleDemoLogin()
+      return
+    }
+    setError('Apple Sign In coming soon!')
   }
 
   const signInWithWhatsApp = async () => {
-    // TODO: Implement WhatsApp login
-    console.log('WhatsApp login - Coming soon!')
+    if (IS_DEMO_MODE) {
+      handleDemoLogin()
+      return
+    }
+    setError('WhatsApp login coming soon!')
   }
 
   const loginEmailCallback = async (email: string) => {
     try {
       setLoading(true)
-      await axios.post('/api/auth/email/', {
+      setError('')
+      const apiUrl = import.meta.env.VITE_API_URL || ''
+      await axios.post(`${apiUrl}/api/auth/email/`, {
         email: email,
         texts: {
           subject: t('login:subject'),
@@ -78,8 +114,10 @@ export const LoginGoogle: FC = () => {
       })
       setSuccessEmailLogin(true)
       setLoading(false)
-    } catch (error) {
+    } catch (err) {
       setLoading(false)
+      setError('Backend API not available. Please try demo mode!')
+      console.error(err)
     }
   }
 
@@ -116,7 +154,22 @@ export const LoginGoogle: FC = () => {
                 {isSignup ? 'Create your account' : 'Welcome back!'}
               </p>
             </div>
+            
+            {/* Demo Mode Badge */}
+            {IS_DEMO_MODE && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                Demo Mode (No backend required)
+              </div>
+            )}
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
 
           {successEmailLogin ? (
             <div className="text-center space-y-4 py-8">
@@ -141,7 +194,7 @@ export const LoginGoogle: FC = () => {
                   className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:border-primary-400 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-gray-700"
                 >
                   <IconGoogle width={20} height={20} />
-                  Continue with Google
+                  {IS_DEMO_MODE ? 'Try Demo with Google' : 'Continue with Google'}
                 </button>
 
                 <button
@@ -149,7 +202,7 @@ export const LoginGoogle: FC = () => {
                   className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
                 >
                   <IconApple width={20} height={20} fill="white" />
-                  Continue with Apple
+                  {IS_DEMO_MODE ? 'Try Demo with Apple' : 'Continue with Apple'}
                 </button>
 
                 <button
@@ -157,53 +210,57 @@ export const LoginGoogle: FC = () => {
                   className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
                 >
                   <IconWhatsapp width={20} height={20} />
-                  Continue with WhatsApp
+                  {IS_DEMO_MODE ? 'Try Demo with WhatsApp' : 'Continue with WhatsApp'}
                 </button>
               </div>
 
-              {/* Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500 font-medium">
-                    Or continue with email
-                  </span>
-                </div>
-              </div>
+              {!IS_DEMO_MODE && (
+                <>
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white text-gray-500 font-medium">
+                        Or continue with email
+                      </span>
+                    </div>
+                  </div>
 
-              {/* Email Form */}
-              <div className="space-y-4">
-                <BaseInput
-                  type="email"
-                  name="email"
-                  value={values.email}
-                  error={errors.email}
-                  label={t('common:email')}
-                  handleChange={handleChange}
-                  placeholder="you@example.com"
-                />
+                  {/* Email Form */}
+                  <div className="space-y-4">
+                    <BaseInput
+                      type="email"
+                      name="email"
+                      value={values.email}
+                      error={errors.email}
+                      label={t('common:email')}
+                      handleChange={handleChange}
+                      placeholder="you@example.com"
+                    />
 
-                <BaseButton
-                  onClick={handleSubmit}
-                  wFull
-                  style="primary"
-                  text={isSignup ? 'Create Account' : 'Send Magic Link'}
-                />
-              </div>
+                    <BaseButton
+                      onClick={handleSubmit}
+                      wFull
+                      style="primary"
+                      text={isSignup ? 'Create Account' : 'Send Magic Link'}
+                    />
+                  </div>
 
-              {/* Toggle Login/Signup */}
-              <div className="text-center">
-                <button
-                  onClick={() => setIsSignup(!isSignup)}
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  {isSignup
-                    ? 'Already have an account? Sign in'
-                    : "Don't have an account? Sign up"}
-                </button>
-              </div>
+                  {/* Toggle Login/Signup */}
+                  <div className="text-center">
+                    <button
+                      onClick={() => setIsSignup(!isSignup)}
+                      className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      {isSignup
+                        ? 'Already have an account? Sign in'
+                        : "Don't have an account? Sign up"}
+                    </button>
+                  </div>
+                </>
+              )}
 
               {/* Terms Link */}
               <div className="text-center pt-4 border-t border-gray-200">
@@ -211,7 +268,7 @@ export const LoginGoogle: FC = () => {
                   href="/terms"
                   className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  {t('login:terms')}
+                  Terms of Service & Privacy Policy
                 </a>
               </div>
             </>
@@ -220,7 +277,10 @@ export const LoginGoogle: FC = () => {
 
         {/* Additional Info */}
         <p className="mt-8 text-center text-sm text-gray-600">
-          By continuing, you agree to Pet's Love's Terms of Service and Privacy Policy
+          {IS_DEMO_MODE 
+            ? '🎭 Demo mode - Experience the app without setting up a backend!'
+            : 'By continuing, you agree to Pet\'s Love\'s Terms of Service and Privacy Policy'
+          }
         </p>
       </div>
     </div>
