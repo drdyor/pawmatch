@@ -79,10 +79,19 @@ function HealthBadges({ health = [] }: any) {
 
 // --- Design tokens ---
 const Mobile = ({ children }: any) => (
-  <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-amber-50 to-rose-50 p-6">
-    <div className="relative w-[390px] max-w-full bg-white rounded-[28px] shadow-xl ring-1 ring-black/5 overflow-hidden">
+  <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-amber-50 to-rose-50 p-4 overflow-auto">
+    {/*
+      Responsive phone frame
+      - Auto scales to container instead of hard 390px
+      - Avoids clipping on small canvases (fix for the narrow UI issue)
+    */}
+    <div
+      className="relative max-w-[420px] w-full bg-white rounded-[28px] shadow-xl ring-1 ring-black/5 overflow-hidden"
+      style={{ transformOrigin: 'top center' }}
+    >
+      {/* mobile notch */}
       <div className="absolute left-1/2 -translate-x-1/2 top-0 h-6 w-40 bg-black/10 rounded-b-2xl z-50" />
-      {children}
+      <div className="[&>*]:max-w-full">{children}</div>
     </div>
   </div>
 );
@@ -678,9 +687,13 @@ export const NewOnboardingPage: React.FC = () => {
 
   const go = (d: any)=> setData((prev: any)=> ({...prev, ...d}));
 
+  // Defensive wrapper to keep content readable on very narrow previews
+  const containerClass = "sm:w-[390px] w-full max-w-[420px] mx-auto";
+
   return (
     <Mobile>
-      {step === 0 && <RoleSelect onNext={(d: any)=>{ go(d); setStep(1); }} />}
+      <div className={containerClass}>
+        {step === 0 && <RoleSelect onNext={(d: any)=>{ go(d); setStep(1); }} />}
 
       {/* INDEPENDENT OWNER / BREEDER / BUYER / SHELTER - same flow */}
       {role !== 'vet' && step === 1 && <PetQuickAdd onBack={()=>setStep(0)} onNext={(d: any)=>{ go(d); setStep(2); }} />}
@@ -693,6 +706,7 @@ export const NewOnboardingPage: React.FC = () => {
       {role === 'vet' && step === 2 && <VetPatients onBack={()=>setStep(1)} onNext={(d: any)=>{ go(d); setStep(3); }} />}
       {role === 'vet' && step === 3 && <VetCertificateRequest patients={data.patients||[]} onBack={()=>setStep(2)} onNext={(d: any)=>{ go(d); setStep(4); }} />}
       {role === 'vet' && step === 4 && <VetDashboard />}
+      </div>
     </Mobile>
   );
 };
