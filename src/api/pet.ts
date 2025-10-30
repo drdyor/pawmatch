@@ -18,9 +18,19 @@ export const getPets = async ({
   category?: string
   adopted?: boolean
 }) => {
-  const response = await axios.get(
-    `/api/v1/pets?category=${category}&adopted=${adopted}&gender=${gender}&page=${page}&country=${country}&city=${city}`,
-  )
+  const params = new URLSearchParams()
+  
+  if (category) params.append('category', category)
+  if (adopted !== undefined) params.append('adopted', String(adopted))
+  if (gender) params.append('gender', gender)
+  if (page) params.append('page', String(page))
+  if (country) params.append('country', country)
+  if (city) params.append('city', city)
+  
+  const queryString = params.toString()
+  const url = queryString ? `/api/v1/pets?${queryString}` : '/api/v1/pets'
+  
+  const response = await axios.get(url)
   return response.data
 }
 
@@ -39,9 +49,16 @@ export const getUserPets = async ({
   searchByName?: string
   adopted?: boolean | string
 }) => {
-  const response = await axios.get(
-    `/api/v1/pets/user?category=${category}&adopted=${adopted}&gender=${gender}&searchByName=${searchByName}&page=${page}&userId=${id}`,
-  )
+  const params = new URLSearchParams()
+  
+  params.append('userId', id)
+  if (category) params.append('category', category)
+  if (adopted !== undefined && adopted !== '') params.append('adopted', String(adopted))
+  if (gender) params.append('gender', gender)
+  if (searchByName) params.append('searchByName', searchByName)
+  if (page) params.append('page', String(page))
+  
+  const response = await axios.get(`/api/v1/pets/user?${params.toString()}`)
   return response.data
 }
 
