@@ -26,12 +26,15 @@ axios.interceptors.response.use(
   },
   (error) => {
     const token = getCookie('token')
+    
+    // Check if error.response exists before accessing its properties
     if (
       !window.location.href.includes('/login') &&
-      error.response.status === 401 &&
+      error.response?.status === 401 &&
       token
-    )
+    ) {
       window.location.href = '/login'
+    }
 
     return Promise.reject(error)
   },
