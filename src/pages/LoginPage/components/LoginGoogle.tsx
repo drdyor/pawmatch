@@ -129,7 +129,7 @@ export const LoginGoogle: FC = () => {
               </div>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Pet's Love</h1>
+              <h1 className="text-3xl font-bold text-gray-900">PawMatch</h1>
               <p className="mt-2 text-sm text-gray-600">
                 {isSignup ? 'Create your account' : 'Welcome back!'}
               </p>
@@ -254,7 +254,7 @@ export const LoginGoogle: FC = () => {
         {/* Additional Info */}
         <p className="mt-8 text-center text-sm text-gray-600">
           {isFirebaseConfigured 
-            ? 'By continuing, you agree to Pet\'s Love\'s Terms of Service'
+            ? 'By continuing, you agree to PawMatch\'s Terms of Service'
             : '🎭 Demo mode active - Setup Firebase for full auth features'
           }
         </p>

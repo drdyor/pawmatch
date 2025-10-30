@@ -1,16 +1,14 @@
-## Pet's Love API 🐰
+## PawMatch 🐾
 
-- [API - Backend](https://github.com/alexrobaina/api-pets-love)
+A modern pet adoption platform with Tinder-style swipe interface.
 
-## Pet's Love Contributing 🦊
+## Stack
 
-- Please take a look at the CONTRIBUTING.md file.
+React + TypeScript + Vite + Tailwind + Firebase + Framer Motion
 
-## React + TypeScript + Vite + Tailwind + Vitest + React-testing-library
+# 🐶 🐱 PawMatch 🐭 🐹 🐰
 
-# 🐶 🐱 🦊 Pets Love 🐭 🐹 🐰
-
-Welcome to Pets Love, an open-source project dedicated to the love and care of pets! Our mission is to create a positive impact in the world of animals by connecting shelters, veterinarians, volunteers, adopters, and brands in a unified platform.
+Welcome to PawMatch - Find your perfect pet match! Our mission is to create a positive impact in the world of animals by connecting shelters, veterinarians, volunteers, adopters, and brands in a unified platform.
 
 ## Project Objectives
 
