@@ -14,12 +14,14 @@ import BuyerHomeScreen from '../screens/buyer/BuyerHomeScreen';
 import BuyerFavoritesScreen from '../screens/buyer/BuyerFavoritesScreen';
 import BuyerAlertsScreen from '../screens/buyer/BuyerAlertsScreen';
 import BuyerProfileScreen from '../screens/buyer/BuyerProfileScreen';
+import BuyerPreferencesScreen from '../screens/buyer/BuyerPreferencesScreen';
 
 // Breeder Screens
 import BreederHomeScreen from '../screens/breeder/BreederHomeScreen';
 import BreederPetsScreen from '../screens/breeder/BreederPetsScreen';
 import BreederMatchesScreen from '../screens/breeder/BreederMatchesScreen';
 import BreederProfileScreen from '../screens/breeder/BreederProfileScreen';
+import BreederCreateLitterScreen from '../screens/breeder/BreederCreateLitterScreen';
 
 // Shelter Screens
 import ShelterHomeScreen from '../screens/shelter/ShelterHomeScreen';
@@ -122,10 +124,16 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
           // Main App Stack based on role
           <>
             {userRole === 'buyer' && (
-              <Stack.Screen name="BuyerMain" component={BuyerTabs} />
+              <>
+                <Stack.Screen name="BuyerMain" component={BuyerTabs} />
+                <Stack.Screen name="BuyerPreferences" component={BuyerPreferencesScreen} />
+              </>
             )}
             {(userRole === 'breeder_registered' || userRole === 'breeder_independent') && (
-              <Stack.Screen name="BreederMain" component={BreederTabs} />
+              <>
+                <Stack.Screen name="BreederMain" component={BreederTabs} />
+                <Stack.Screen name="CreateLitter" component={BreederCreateLitterScreen} />
+              </>
             )}
             {userRole === 'shelter' && (
               <Stack.Screen name="ShelterMain" component={ShelterTabs} />
