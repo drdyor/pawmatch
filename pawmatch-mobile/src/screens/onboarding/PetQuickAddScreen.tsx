@@ -22,6 +22,7 @@ interface Pet {
   badges: {
     vaccinated: boolean;
     dna: boolean;
+    fiv_felv?: boolean;
   };
 }
 
@@ -47,7 +48,7 @@ export function PetQuickAddScreen({ onNext, onBack }: PetQuickAddScreenProps) {
     breed: '',
     age: '',
     temperament: [],
-    badges: { vaccinated: true, dna: false },
+    badges: { vaccinated: true, dna: false, fiv_felv: false },
   });
 
   const toggleTemperament = (t: string) => {
@@ -68,7 +69,7 @@ export function PetQuickAddScreen({ onNext, onBack }: PetQuickAddScreenProps) {
       breed: '',
       age: '',
       temperament: [],
-      badges: { vaccinated: true, dna: false },
+      badges: { vaccinated: true, dna: false, fiv_felv: false },
     });
   };
 
@@ -154,7 +155,7 @@ export function PetQuickAddScreen({ onNext, onBack }: PetQuickAddScreenProps) {
 
             <View>
               <Text style={styles.label}>Health badges</Text>
-              <View style={styles.chipRow}>
+              <View style={styles.chipWrap}>
                 <Chip
                   active={draft.badges.vaccinated}
                   onPress={() =>
@@ -180,6 +181,22 @@ export function PetQuickAddScreen({ onNext, onBack }: PetQuickAddScreenProps) {
                 >
                   ✨ DNA Clear
                 </Chip>
+                {draft.species === 'Cat' && (
+                  <Chip
+                    active={draft.badges.fiv_felv || false}
+                    onPress={() =>
+                      setDraft({
+                        ...draft,
+                        badges: {
+                          ...draft.badges,
+                          fiv_felv: !draft.badges.fiv_felv,
+                        },
+                      })
+                    }
+                  >
+                    🐱 FIV/FeLV-
+                  </Chip>
+                )}
               </View>
             </View>
 
@@ -235,6 +252,14 @@ export function PetQuickAddScreen({ onNext, onBack }: PetQuickAddScreenProps) {
                           ? [
                               {
                                 type: 'dna_tested' as const,
+                                date: new Date().toISOString().slice(0, 10),
+                              },
+                            ]
+                          : []),
+                        ...(p.badges?.fiv_felv && p.species === 'Cat'
+                          ? [
+                              {
+                                type: 'fiv_felv' as const,
                                 date: new Date().toISOString().slice(0, 10),
                               },
                             ]
