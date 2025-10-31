@@ -100,91 +100,44 @@ export default function DiscoveryCard({
           <Text style={styles.watermarkText}>PawMatch MT</Text>
         </View>
 
-        {/* Info Overlay */}
+        {/* Tinder-style Bottom Info Overlay */}
         <View style={styles.overlay}>
           <View style={styles.overlayContent}>
-            <Text style={styles.petName}>
-              {pet.name} • {ageDisplay}
-            </Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.petName}>
+                {pet.name}, {ageDisplay}
+              </Text>
+              {pet.health_badges?.includes('vet_checked') && (
+                <View style={styles.verifiedBadge}>
+                  <Text style={styles.verifiedText}>✓</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.petBreed}>
-              {pet.breed || 'Mixed'} • {pet.city || pet.country || 'Malta'}
+              {pet.breed || 'Mixed'}
             </Text>
+            {pet.city && (
+              <Text style={styles.petLocation}>
+                📍 {pet.city}, {pet.country || 'Malta'}
+              </Text>
+            )}
+            {/* Quick tags - minimal info */}
+            {pet.metadata?.temperament && pet.metadata.temperament.length > 0 && (
+              <View style={styles.quickTagsContainer}>
+                {pet.metadata.temperament.slice(0, 2).map((tag: string) => (
+                  <View key={tag} style={styles.quickTag}>
+                    <Text style={styles.quickTagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </View>
 
-      {/* Card Info */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.sectionTitle}>About</Text>
-        <Text style={styles.description} numberOfLines={3}>
-          {pet.description || `${pet.name} is looking for a loving ${pet.listing_type === 'adoption' ? 'home' : 'connection'}.`}
-        </Text>
+      {/* Hidden info section - shows when you tap "Info" button */}
 
-        {/* Origin Country (if not Malta) */}
-        {pet.country && pet.country !== 'Malta' && (
-          <View style={styles.originRow}>
-            <Text style={styles.originLabel}>Origin: {pet.country}</Text>
-          </View>
-        )}
-
-        {/* Temperament Tags */}
-        {pet.metadata?.temperament && pet.metadata.temperament.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {pet.metadata.temperament.slice(0, 3).map((tag: string) => (
-              <View key={tag} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Health Badges */}
-        {pet.health_badges && pet.health_badges.length > 0 && (
-          <View style={styles.badgesContainer}>
-            {pet.health_badges.includes('vet_checked') && (
-              <View style={styles.healthBadge}>
-                <Text style={styles.healthBadgeText}>✅ Vet Checked</Text>
-              </View>
-            )}
-            {pet.health_badges.includes('dna_verified') && (
-              <View style={styles.healthBadge}>
-                <Text style={styles.healthBadgeText}>🧬 DNA Verified</Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Action Buttons */}
-        {showActions && (
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.dislikeButton]}
-              onPress={onSwipeLeft}
-            >
-              <Text style={styles.actionButtonText}>✕</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.infoButton]}
-              onPress={onInfo}
-            >
-              <Text style={styles.actionButtonText}>ℹ️</Text>
-            </TouchableOpacity>
-            {onSuperLike && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.superLikeButton]}
-                onPress={onSuperLike}
-              >
-                <Text style={styles.actionButtonText}>⭐</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={[styles.actionButton, styles.likeButton]}
-              onPress={onSwipeRight}
-            >
-              <Text style={styles.actionButtonText}>❤️</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Action buttons removed - shown separately below card for Tinder-style */}
       </View>
     </View>
   );
@@ -194,8 +147,8 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    height: '70%',
-    maxHeight: 600,
+    height: '85%', // Larger card like Tinder
+    maxHeight: 650,
     backgroundColor: '#fff',
     borderRadius: 20,
     overflow: 'hidden',
@@ -207,7 +160,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: '65%',
+    height: '100%', // Full height - photo takes entire card
     position: 'relative',
   },
   image: {
@@ -284,27 +237,73 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 15,
+    background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+    paddingTop: 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   overlayContent: {
-    gap: 4,
+    gap: 6,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   petName: {
     fontFamily: FONTS.bold,
-    fontSize: 24,
+    fontSize: 32,
     color: '#fff',
     fontWeight: '800',
   },
+  verifiedBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  verifiedText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
   petBreed: {
     fontFamily: FONTS.medium,
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  petLocation: {
+    fontFamily: FONTS.regular,
     fontSize: 16,
     color: 'rgba(255,255,255,0.9)',
+    marginTop: 4,
+  },
+  quickTagsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  quickTag: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  quickTagText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   infoContainer: {
-    padding: 20,
-    height: '35%',
-    justifyContent: 'space-between',
+    // Removed - info now only in overlay for Tinder-style
+    display: 'none',
   },
   sectionTitle: {
     fontFamily: FONTS.bold,

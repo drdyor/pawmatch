@@ -238,14 +238,15 @@ export default function BreedingDiscoveryScreen({ navigation }: any) {
         ))}
       </ScrollView>
 
-      {/* Swipe Cards */}
+      {/* Swipe Cards - Tinder-style stacking */}
       <View style={styles.cardsContainer}>
-        {nextPet && (
-          <View style={[styles.card, styles.cardBehind]}>
+        {/* Show next 2 cards behind for stacking effect */}
+        {currentIndex < pets.length - 1 && (
+          <View style={[styles.card, styles.cardBehind, { zIndex: 1 }]}>
             <Image
               source={
-                nextPet.photos && nextPet.photos.length > 0
-                  ? { uri: nextPet.photos[0] }
+                pets[currentIndex + 1].photos && pets[currentIndex + 1].photos.length > 0
+                  ? { uri: pets[currentIndex + 1].photos[0] }
                   : require('../../assets/images/placeholder-pet.png')
               }
               style={styles.cardImage}
@@ -253,6 +254,20 @@ export default function BreedingDiscoveryScreen({ navigation }: any) {
             />
           </View>
         )}
+        {currentIndex < pets.length - 2 && (
+          <View style={[styles.card, styles.cardBehind, { zIndex: 0, opacity: 0.4, transform: [{ scale: 0.92 }] }]}>
+            <Image
+              source={
+                pets[currentIndex + 2].photos && pets[currentIndex + 2].photos.length > 0
+                  ? { uri: pets[currentIndex + 2].photos[0] }
+                  : require('../../assets/images/placeholder-pet.png')
+              }
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          </View>
+        )}
+        {/* Current card on top */}
         {currentPet && (
           <SwipeCard
             pet={currentPet}
@@ -266,18 +281,35 @@ export default function BreedingDiscoveryScreen({ navigation }: any) {
         )}
       </View>
 
-      {/* Action Buttons */}
+      {/* Tinder-style Action Buttons */}
       <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleSwipeLeft}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.passButton]} 
+          onPress={handleSwipeLeft}
+          activeOpacity={0.7}
+        >
           <Text style={styles.actionButtonText}>✕</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.superLikeButton]} onPress={handleSuperLike}>
-          <Text style={styles.actionButtonText}>⭐</Text>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.superLikeButton]} 
+          onPress={handleSuperLike}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.superLikeIcon}>⭐</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.likeButton]} onPress={handleSwipeRight}>
-          <Text style={styles.actionButtonText}>❤️</Text>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.likeButton]} 
+          onPress={handleSwipeRight}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.likeIcon}>❤️</Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Card Counter (Tinder-style) */}
+      <Text style={styles.cardCounter}>
+        {currentIndex + 1} / {pets.length}
+      </Text>
     </View>
   );
 }
@@ -323,12 +355,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    paddingHorizontal: 20,
   },
   card: {
     position: 'absolute',
-    width: SCREEN_WIDTH * 0.9,
-    height: '70%',
-    maxHeight: 600,
+    width: SCREEN_WIDTH * 0.92,
+    height: '80%',
+    maxHeight: 650,
     backgroundColor: '#fff',
     borderRadius: 20,
     overflow: 'hidden',
@@ -339,9 +372,10 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   cardBehind: {
-    transform: [{ scale: 0.95 }],
-    opacity: 0.5,
+    transform: [{ scale: 0.96 }],
+    opacity: 0.6,
     zIndex: 1,
+    marginTop: 10, // Slight offset for stacking effect
   },
   cardImage: {
     width: '100%',
@@ -407,31 +441,60 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 24,
-    paddingVertical: 24,
+    alignItems: 'center',
+    gap: 30,
+    paddingVertical: 20,
     paddingHorizontal: 20,
+    marginBottom: 10,
   },
   actionButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+  },
+  passButton: {
+    borderColor: COLORS.maltaRed,
   },
   superLikeButton: {
     backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   likeButton: {
     backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   actionButtonText: {
+    fontSize: 32,
+    color: COLORS.maltaRed,
+    fontWeight: '300',
+  },
+  superLikeIcon: {
     fontSize: 28,
+    color: '#fff',
+  },
+  likeIcon: {
+    fontSize: 32,
+    color: '#fff',
+  },
+  cardCounter: {
+    textAlign: 'center',
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 20,
+    fontFamily: FONTS.medium,
   },
   loadingContainer: {
     flex: 1,
