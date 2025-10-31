@@ -26,6 +26,7 @@ import BreederCreateLitterScreen from '../screens/breeder/BreederCreateLitterScr
 import BreederHeatTrackingScreen from '../screens/breeder/BreederHeatTrackingScreen';
 import BreederAddPetScreen from '../screens/breeder/BreederAddPetScreen';
 import BreedingDiscoveryScreen from '../screens/breeder/BreedingDiscoveryScreen';
+import NewLittersScreen from '../screens/breeder/NewLittersScreen';
 
 // Shelter Screens
 import ShelterHomeScreen from '../screens/shelter/ShelterHomeScreen';
@@ -75,6 +76,7 @@ function BreederTabs() {
     >
       <Tab.Screen name="Dashboard" component={BreederHomeScreen} />
       <Tab.Screen name="My Pets" component={BreederPetsScreen} />
+      <Tab.Screen name="New Litters" component={NewLittersScreen} />
       <Tab.Screen name="Discovery" component={BreedingDiscoveryScreen} />
       <Tab.Screen name="Matches" component={BreederMatchesScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />
@@ -145,6 +147,7 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
                 <Stack.Screen name="HeatTracking" component={BreederHeatTrackingScreen} />
                 <Stack.Screen name="AddPet" component={BreederAddPetScreen} />
                 <Stack.Screen name="BreedingDiscovery" component={BreedingDiscoveryScreen} />
+                <Stack.Screen name="NewLitters" component={NewLittersScreen} />
               </>
             )}
             {userRole === 'shelter' && (
