@@ -27,6 +27,7 @@ export default function ChatThreadScreen({ navigation, route }: any) {
   useEffect(() => {
     loadMessages();
     setupRealtimeSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setupRealtimeSubscription = async () => {

@@ -45,6 +45,7 @@ export default function BreedSelector({
     if (species) {
       loadBreeds();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [species]);
 
   useEffect(() => {
