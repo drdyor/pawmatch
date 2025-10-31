@@ -296,6 +296,24 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
                     </View>
                   )}
 
+                  {/* Location badge */}
+                  {(card.city || card.country) && (
+                    <View style={styles.locationBadge}>
+                      <Text style={styles.locationBadgeText}>
+                        ?? {card.city || card.country || 'Malta'}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Breeding indicator */}
+                  {card.type === 'litter_announcement' && (
+                    <View style={styles.breedingIndicator}>
+                      <Text style={styles.breedingIndicatorText}>
+                        ?? Breeding Available
+                      </Text>
+                    </View>
+                  )}
+
                   {card.type === 'litter_announcement' && (
                     <Text style={styles.cardInfo}>
                       {card.pups_available || 'Several'} puppies available
