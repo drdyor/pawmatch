@@ -18,8 +18,14 @@ import Constants from 'expo-constants';
 import { SUPABASE_CONFIG } from '../config/supabase';
 
 // --- Helpers ----------------------------------------------------------------
-const clean = (v?: string | null) =>
-  (v ?? '').replace(/\u200B|\u200C|\u200D|\uFEFF/g, '').trim();
+const clean = (v?: string | null): string => {
+  if (!v) return '';
+  // Remove all invisible/zero-width characters and trim
+  return String(v)
+    .replace(/[\u200B-\u200D\uFEFF\u00A0\u2028\u2029]/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+};
 
 // Expo (SDK 49+) uses expoConfig; Snack can also surface extras here.
 const extras =
