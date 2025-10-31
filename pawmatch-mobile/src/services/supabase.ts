@@ -2,12 +2,14 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
+import { SUPABASE_CONFIG } from '../config/supabase';
 
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+// Get Supabase credentials from config (which reads from env vars or uses defaults)
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || SUPABASE_CONFIG.url;
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_CONFIG.anonKey;
 
 // Check if we're in demo mode (invalid credentials)
-export const isDemoMode = !supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('demo') || supabaseAnonKey.includes('demo');
+export const isDemoMode = !supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder');
 
 // Create a dummy client for demo mode to prevent errors
 const dummyUrl = 'https://placeholder.supabase.co';
@@ -25,3 +27,8 @@ export const supabase = createClient(
     },
   }
 );
+
+// Log connection status (remove in production)
+if (!isDemoMode) {
+  console.log('? Supabase connected:', supabaseUrl);
+}
