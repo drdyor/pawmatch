@@ -34,13 +34,18 @@ export interface Pet {
   breed: string;
   sex: 'male' | 'female';
   dateOfBirth: string;
+  age_months?: number; // Calculated age for display
   weight?: number;
   size?: 'small' | 'medium' | 'large'; // For dogs
   photos: string[];
   healthRecords: HealthRecord[];
+  health_badges?: string[]; // e.g., ['vet_checked', 'dna_verified']
   status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat' | 'at_risk';
   city: string;
-  country: string;
+  country: string; // Current location
+  origin_country?: string; // Original country (important for breeding to avoid inbreeding)
+  listing_type?: 'breeding' | 'adoption' | 'sale' | 'playdate'; // What the pet/listing is for
+  available_for_breeding?: boolean;
   description?: string;
   createdAt: string;
   // Shelter-specific metadata

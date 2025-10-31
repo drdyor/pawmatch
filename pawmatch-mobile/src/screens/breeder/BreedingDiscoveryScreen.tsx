@@ -19,6 +19,7 @@ import { COLORS, FONTS } from '../../theme';
 import { supabase } from '../../services/supabase';
 import { Pet, Listing } from '../../types';
 import FilterChip from '../../components/FilterChip';
+import DiscoveryCard from '../../components/DiscoveryCard';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
@@ -35,15 +36,26 @@ const BREEDING_FILTERS: { id: BreedingFilter; label: string }[] = [
   { id: 'verified', label: 'Verified' },
 ];
 
+// Swipe wrapper for DiscoveryCard
 interface SwipeCardProps {
   pet: Pet;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
+  onInfo?: () => void;
+  onSuperLike?: () => void;
   index: number;
   total: number;
 }
 
-function SwipeCard({ pet, onSwipeLeft, onSwipeRight, index, total }: SwipeCardProps) {
+function SwipeCard({ 
+  pet, 
+  onSwipeLeft, 
+  onSwipeRight, 
+  onInfo,
+  onSuperLike,
+  index, 
+  total 
+}: SwipeCardProps) {
   const pan = useRef(new Animated.ValueXY()).current;
   const rotate = pan.x.interpolate({
     inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
@@ -75,7 +87,6 @@ function SwipeCard({ pet, onSwipeLeft, onSwipeRight, index, total }: SwipeCardPr
   return (
     <Animated.View
       style={[
-        styles.card,
         {
           transform: [
             { translateX: pan.x },
@@ -86,46 +97,14 @@ function SwipeCard({ pet, onSwipeLeft, onSwipeRight, index, total }: SwipeCardPr
       ]}
       {...panResponder.panHandlers}
     >
-      <Image
-        source={
-          pet.photos && pet.photos.length > 0
-            ? { uri: pet.photos[0] }
-            : require('../../assets/images/placeholder-pet.png')
-        }
-        style={styles.cardImage}
-        resizeMode="cover"
+      <DiscoveryCard
+        pet={pet}
+        onSwipeLeft={onSwipeLeft}
+        onSwipeRight={onSwipeRight}
+        onInfo={onInfo}
+        onSuperLike={onSuperLike}
+        showActions={false} // Actions shown separately below
       />
-      <View style={styles.cardOverlay}>
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardName}>{pet.name}</Text>
-          <Text style={styles.cardBreed}>
-            {pet.breed || 'Mixed'} • {pet.sex || 'Unknown'} • {pet.age_months || 'Unknown'} months
-          </Text>
-          {pet.city && (
-            <View style={styles.locationBadge}>
-              <Text style={styles.locationText}>📍 {pet.city}, {pet.country}</Text>
-            </View>
-          )}
-          {pet.description && (
-            <Text style={styles.cardDescription} numberOfLines={3}>
-              {pet.description}
-            </Text>
-          )}
-          {/* Health Badges */}
-          <View style={styles.badgesContainer}>
-            {pet.health_badges?.includes('vet_checked') && (
-              <View style={styles.healthBadge}>
-                <Text style={styles.badgeText}>✅ Vet Checked</Text>
-              </View>
-            )}
-            {pet.health_badges?.includes('dna_verified') && (
-              <View style={styles.healthBadge}>
-                <Text style={styles.badgeText}>🧬 DNA Verified</Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
     </Animated.View>
   );
 }
@@ -279,6 +258,8 @@ export default function BreedingDiscoveryScreen({ navigation }: any) {
             pet={currentPet}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
+            onInfo={() => navigation.navigate('PetDetail', { petId: currentPet.id })}
+            onSuperLike={handleSuperLike}
             index={currentIndex}
             total={pets.length}
           />
