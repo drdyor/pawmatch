@@ -76,7 +76,7 @@ export default function BreederOnboardingIntent({ navigation, route }: any) {
                   selectedIntents.includes(intent.id) && styles.intentLabelSelected,
                 ]}
               >
-                {label}
+                {intent.label}
               </Text>
               {selectedIntents.includes(intent.id) && (
                 <View style={styles.checkmark}>

@@ -66,7 +66,7 @@ export default function BreedSelector({
     if (species) {
       loadBreeds();
     }
-  }, [species, loadBreeds]);
+  }, [species, loadBreeds]); // loadBreeds already memoized with useCallback
 
   useEffect(() => {
     if (searchQuery.trim()) {

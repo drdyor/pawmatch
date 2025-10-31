@@ -67,7 +67,7 @@ export default function BreedAutocomplete({
     } else {
       setSuggestions([]);
     }
-  }, [query, species, searchBreeds]);
+  }, [query, species, searchBreeds]); // searchBreeds already memoized with useCallback
 
   const handleSelect = (breed: Breed) => {
     setQuery(breed.full_name);

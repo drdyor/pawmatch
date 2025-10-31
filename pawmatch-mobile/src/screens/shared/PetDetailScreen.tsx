@@ -23,6 +23,7 @@ export default function PetDetailScreen({ navigation, route }: any) {
 
   useEffect(() => {
     loadPetDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPetDetails = async () => {
