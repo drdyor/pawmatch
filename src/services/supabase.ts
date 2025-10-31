@@ -32,4 +32,3 @@ export const supabase = createClient(
     },
   }
 );
-/* Test commit Fri Oct 31 03:37:08 PM UTC 2025 */
