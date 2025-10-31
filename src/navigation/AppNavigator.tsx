@@ -17,6 +17,7 @@ import BreederOnboardingPets from '../screens/onboarding/BreederOnboardingPets';
 
 // Buyer Screens
 import BuyerHomeScreen from '../screens/buyer/BuyerHomeScreen';
+import BuyerSwipeDiscoverScreen from '../screens/buyer/BuyerSwipeDiscoverScreen';
 import BuyerFavoritesScreen from '../screens/buyer/BuyerFavoritesScreen';
 import BuyerAlertsScreen from '../screens/buyer/BuyerAlertsScreen';
 import BuyerProfileScreen from '../screens/buyer/BuyerProfileScreen';
@@ -62,7 +63,7 @@ function BuyerTabs() {
         tabBarInactiveTintColor: '#6B7280',
       }}
     >
-      <Tab.Screen name="Discover" component={BuyerHomeScreen} />
+      <Tab.Screen name="Discover" component={BuyerSwipeDiscoverScreen} />
       <Tab.Screen name="Favorites" component={BuyerFavoritesScreen} />
       <Tab.Screen name="Alerts" component={BuyerAlertsScreen} />
       <Tab.Screen name="Profile" component={BuyerProfileScreen} />
@@ -144,6 +145,7 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
               <>
                 <Stack.Screen name="BuyerMain" component={BuyerTabs} />
                 <Stack.Screen name="BuyerPreferences" component={BuyerPreferencesScreen} />
+                <Stack.Screen name="BuyerSwipeDiscover" component={BuyerSwipeDiscoverScreen} />
                 <Stack.Screen name="CommunityVoting" component={CommunityVotingScreen} />
               </>
             )}

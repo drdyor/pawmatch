@@ -1,5 +1,5 @@
-// Buyer Swipe Discover Screen - Works in Expo Snack
-import React, { useState, useEffect, useRef } from 'react';
+// Buyer Swipe Discover Screen - PROPER Tinder-style with react-native-deck-swiper
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,8 @@ import {
   Platform,
   Modal,
   ScrollView,
-  Animated,
-  PanResponder,
 } from 'react-native';
+import Swiper from 'react-native-deck-swiper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FilterChips } from '../../components/FilterChips';
 import { MatchCelebration } from '../../components/MatchCelebration';
@@ -25,7 +24,6 @@ import { Listing, Pet } from '../../types';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const CARD_HEIGHT = Math.min(600, SCREEN_HEIGHT * 0.7);
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
 type LitterCard = Listing & { pet: Pet };
 
@@ -33,42 +31,22 @@ const FILTER_CHIPS = [
   { id: 'all', label: 'All Pets' },
   { id: 'dogs', label: 'Dogs' },
   { id: 'cats', label: 'Cats' },
-  { id: 'breeders', label: 'Breeding' },
-  { id: 'adoption', label: 'Adoption' },
+  { id: 'breeders', label: 'Breeders' },
+  { id: 'shelters', label: 'Shelters' },
   { id: 'verified', label: 'Verified' },
   { id: 'puppies', label: 'Puppies' },
-  { id: 'maltese', label: 'Maltese Dogs' },
-  { id: 'local', label: 'Local Breeders' },
 ];
 
 export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   const [cards, setCards] = useState<LitterCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCard, setSelectedCard] = useState<LitterCard | null>(null);
   const [matchVisible, setMatchVisible] = useState(false);
   const [matchedPet, setMatchedPet] = useState<string>('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
-  const position = useRef(new Animated.ValueXY()).current;
-  const rotation = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-15deg', '0deg', '15deg'],
-    extrapolate: 'clamp',
-  });
-
-  const likeOpacity = position.x.interpolate({
-    inputRange: [0, SCREEN_WIDTH / 4],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const nopeOpacity = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 4, 0],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  const [recentMatches, setRecentMatches] = useState<LitterCard[]>([]);
+  const swiperRef = useRef<any>(null);
 
   useEffect(() => {
     loadCards();
@@ -158,58 +136,16 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
           return age < 1;
         });
         break;
-      case 'maltese':
-        filtered = filtered.filter(c => 
-          c.pet?.breed?.toLowerCase().includes('maltese')
-        );
+      case 'verified':
+        filtered = filtered.filter(c => c.pet?.verified === true);
         break;
     }
     
     return filtered;
   }, [cards, activeFilter]);
 
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderMove: (_, gesture) => {
-      position.setValue({ x: gesture.dx, y: gesture.dy });
-    },
-    onPanResponderRelease: (_, gesture) => {
-      if (gesture.dx > SWIPE_THRESHOLD) {
-        forceSwipe('right');
-      } else if (gesture.dx < -SWIPE_THRESHOLD) {
-        forceSwipe('left');
-      } else {
-        resetPosition();
-      }
-    },
-  });
-
-  const forceSwipe = (direction: 'left' | 'right') => {
-    const x = direction === 'right' ? SCREEN_WIDTH + 100 : -SCREEN_WIDTH - 100;
-    Animated.timing(position, {
-      toValue: { x, y: 0 },
-      duration: 250,
-      useNativeDriver: false,
-    }).start(() => {
-      if (direction === 'right') {
-        handleLike();
-      } else {
-        handlePass();
-      }
-      position.setValue({ x: 0, y: 0 });
-      setCurrentIndex(prev => prev + 1);
-    });
-  };
-
-  const resetPosition = () => {
-    Animated.spring(position, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const handleLike = async () => {
-    const card = filteredCards[currentIndex];
+  const handleSwipeRight = useCallback(async (index: number) => {
+    const card = filteredCards[index];
     if (!card) return;
 
     try {
@@ -222,21 +158,22 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       }
 
       setFavorites(prev => new Set(prev).add(card.id));
+      setRecentMatches(prev => [card, ...prev.filter(c => c.id !== card.id)].slice(0, 12));
       setMatchedPet(card.pet?.name || 'Pet');
       setMatchVisible(true);
     } catch (error: any) {
       console.error('Error saving favorite:', error);
     }
-  };
+  }, [filteredCards]);
 
-  const handlePass = () => {
-    // Just move to next
-    console.log('Passed on:', filteredCards[currentIndex]?.pet?.name);
-  };
+  const handleSwipeTop = useCallback(async (index: number) => {
+    // Top swipe = Super Like = Save
+    await handleSwipeRight(index);
+  }, [handleSwipeRight]);
 
-  const handleSave = async () => {
-    await handleLike();
-  };
+  const handleSwipeLeft = useCallback((index: number) => {
+    console.log('Passed on:', filteredCards[index]?.pet?.name);
+  }, [filteredCards]);
 
   if (loading) {
     return (
@@ -247,17 +184,14 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     );
   }
 
-  if (filteredCards.length === 0 || currentIndex >= filteredCards.length) {
+  if (filteredCards.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>No more pets found</Text>
+        <Text style={styles.emptyText}>No pets found</Text>
         <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
         <TouchableOpacity
           style={styles.refreshButton}
-          onPress={() => {
-            setCurrentIndex(0);
-            loadCards();
-          }}
+          onPress={loadCards}
         >
           <Text style={styles.refreshButtonText}>Refresh</Text>
         </TouchableOpacity>
@@ -265,20 +199,14 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     );
   }
 
-  const currentCard = filteredCards[currentIndex];
-  const nextCard = filteredCards[currentIndex + 1];
-
   return (
     <LinearGradient
       colors={['#667eea', '#764ba2']}
       style={styles.container}
     >
-      {/* Malta Header */}
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.flag}>
-          <Text style={styles.flagText}>🇲🇹</Text>
-        </View>
-        <Text style={styles.headerTitle}>PawMatch Malta</Text>
+        <Text style={styles.headerTitle}>PawMatch</Text>
         <Text style={styles.headerSubtitle}>Find your perfect furry companion</Text>
       </View>
 
@@ -291,108 +219,203 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
         />
       </View>
 
-      {/* Card Stack */}
-      <View style={styles.cardContainer}>
-        {/* Next card preview */}
-        {nextCard && (
-          <View style={[styles.cardPreview, { opacity: 0.5, transform: [{ scale: 0.95 }] }]}>
-            <Image
-              source={{
-                uri: nextCard.pet.photos?.[0] || nextCard.photos?.[0] || 'https://via.placeholder.com/400x600'
-              }}
-              style={styles.cardImage}
-              resizeMode="cover"
-            />
-          </View>
-        )}
+      {/* Swipe Deck Container */}
+      <View style={styles.deckContainer}>
+        <Swiper
+          ref={swiperRef}
+          cards={filteredCards}
+          renderCard={(card: LitterCard | undefined) => {
+            if (!card || !card.pet) {
+              return (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyCardText}>No more cards</Text>
+                </View>
+              );
+            }
 
-        {/* Current card */}
-        {currentCard && currentCard.pet && (
-          <Animated.View
-            style={[
-              styles.card,
-              {
-                transform: [{ translateX: position.x }, { translateY: position.y }, { rotate: rotation }],
-              },
-            ]}
-            {...panResponder.panHandlers}
-          >
-            {/* Like overlay */}
-            <Animated.View style={[styles.overlay, styles.likeOverlay, { opacity: likeOpacity }]}>
-              <Text style={styles.overlayText}>LIKE</Text>
-            </Animated.View>
-
-            {/* Pass overlay */}
-            <Animated.View style={[styles.overlay, styles.passOverlay, { opacity: nopeOpacity }]}>
-              <Text style={styles.overlayText}>NOPE</Text>
-            </Animated.View>
-
-            <TouchableOpacity
-              style={styles.cardTouchable}
-              onPress={() => setSelectedCard(currentCard)}
-              activeOpacity={1}
-            >
-              <Image
-                source={{
-                  uri: currentCard.pet.photos?.[0] || currentCard.photos?.[0] || 'https://via.placeholder.com/400x600'
-                }}
-                style={styles.cardImage}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.75)']}
-                style={styles.cardGradient}
-              />
-              <View style={styles.cardContent}>
-                <Text style={styles.cardName}>{currentCard.pet.name}</Text>
-                <Text style={styles.cardBreed}>{currentCard.pet.breed}</Text>
-                {currentCard.pet.status === 'available' && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>Available</Text>
+            return (
+              <View style={[styles.card, SHADOW.card]}>
+                <Image
+                  source={{
+                    uri: card.pet.photos?.[0] || card.photos?.[0] || 'https://via.placeholder.com/400x600'
+                  }}
+                  style={styles.cardImage}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.75)']}
+                  style={styles.cardGradient}
+                />
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardName}>{card.pet.name}</Text>
+                  <Text style={styles.cardBreed}>{card.pet.breed}</Text>
+                  
+                  {/* Health badges */}
+                  <View style={styles.badgeRow}>
+                    {card.pet.verified && (
+                      <View style={styles.healthBadge}>
+                        <Text style={styles.healthBadgeText}>✓ Verified</Text>
+                      </View>
+                    )}
+                    {card.type === 'litter_announcement' && (
+                      <View style={[styles.healthBadge, styles.healthBadgePending]}>
+                        <Text style={styles.healthBadgeText}>⭐ Litter</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-                {currentCard.type === 'litter_announcement' && (
-                  <Text style={styles.cardInfo}>
-                    {currentCard.pups_available || 'Several'} puppies available
-                  </Text>
-                )}
-                {currentCard.price && currentCard.price > 0 && (
-                  <Text style={styles.cardPrice}>€{currentCard.price}</Text>
-                )}
+
+                  {/* Reputation score */}
+                  {card.pet.reputation && (
+                    <View style={styles.reputationScore}>
+                      <Text style={styles.reputationText}>
+                        🏆 {card.pet.reputation} pts
+                      </Text>
+                    </View>
+                  )}
+
+                  {card.type === 'litter_announcement' && (
+                    <Text style={styles.cardInfo}>
+                      {card.pups_available || 'Several'} puppies available
+                    </Text>
+                  )}
+                  {card.price && card.price > 0 && (
+                    <Text style={styles.cardPrice}>€{card.price}</Text>
+                  )}
+                </View>
               </View>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
+            );
+          }}
+          onSwipedLeft={handleSwipeLeft}
+          onSwipedRight={handleSwipeRight}
+          onSwipedTop={handleSwipeTop}
+          onTapCard={(index: number) => {
+            setSelectedCard(filteredCards[index]);
+          }}
+          cardIndex={0}
+          backgroundColor="transparent"
+          stackSize={3}
+          stackScale={0.92}
+          stackSeparation={16}
+          disableTopSwipe={false}
+          animateCardOpacity
+          animateOverlayLabelsOpacity
+          overlayLabels={{
+            left: {
+              title: 'NOPE',
+              style: {
+                label: {
+                  backgroundColor: '#FE3C72',
+                  borderColor: '#FE3C72',
+                  color: '#fff',
+                  borderWidth: 2,
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  justifyContent: 'flex-start',
+                  marginTop: 30,
+                  marginLeft: -30,
+                },
+              },
+            },
+            right: {
+              title: 'LIKE',
+              style: {
+                label: {
+                  backgroundColor: '#4FC978',
+                  borderColor: '#4FC978',
+                  color: '#fff',
+                  borderWidth: 2,
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-start',
+                  marginTop: 30,
+                  marginLeft: 30,
+                },
+              },
+            },
+            top: {
+              title: 'SAVE',
+              style: {
+                label: {
+                  backgroundColor: '#E11D48',
+                  borderColor: '#E11D48',
+                  color: '#fff',
+                  borderWidth: 2,
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  marginTop: 20,
+                },
+              },
+            },
+          }}
+        />
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.passButton]}
+            onPress={() => swiperRef.current?.swipeLeft()}
+          >
+            <Text style={styles.actionButtonText}>✕</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.superButton]}
+            onPress={() => swiperRef.current?.swipeTop()}
+          >
+            <Text style={styles.actionButtonText}>⭐</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.likeButton]}
+            onPress={() => swiperRef.current?.swipeRight()}
+          >
+            <Text style={styles.actionButtonText}>♥</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.passButton]}
-          onPress={() => forceSwipe('left')}
-        >
-          <Text style={styles.actionButtonText}>✕</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.saveButton]}
-          onPress={handleSave}
-        >
-          <Text style={styles.actionButtonText}>★</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.likeButton]}
-          onPress={() => forceSwipe('right')}
-        >
-          <Text style={styles.actionButtonText}>♥</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Card Counter */}
-      <View style={styles.counter}>
-        <Text style={styles.counterText}>
-          {currentIndex + 1} / {filteredCards.length}
-        </Text>
-      </View>
+      {/* Recent Matches */}
+      {recentMatches.length > 0 && (
+        <View style={styles.recentMatchesContainer}>
+          <Text style={styles.recentMatchesTitle}>Recent Matches</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentMatchesRow}>
+            {recentMatches.map((match) => (
+              <TouchableOpacity
+                key={match.id}
+                style={styles.recentMatchItem}
+                onPress={() => setSelectedCard(match)}
+              >
+                <View style={styles.recentMatchAvatar}>
+                  <Image
+                    source={{
+                      uri: match.pet?.photos?.[0] || 'https://via.placeholder.com/64'
+                    }}
+                    style={styles.recentMatchImage}
+                  />
+                </View>
+                <Text style={styles.recentMatchName}>{match.pet?.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {/* Match Celebration */}
       <MatchCelebration
@@ -489,60 +512,47 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 50,
     paddingHorizontal: 16,
-    alignItems: 'center',
     paddingBottom: 12,
-  },
-  flag: {
-    width: 44,
-    height: 30,
-    borderRadius: 6,
-    backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-  flagText: {
-    fontSize: 16,
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 30,
+    fontSize: 36,
     fontWeight: '800',
+    fontFamily: 'System',
     marginBottom: 4,
   },
   headerSubtitle: {
-    color: '#ffffffcc',
-    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 16,
   },
   filterContainer: {
     marginBottom: 12,
   },
-  cardContainer: {
+  deckContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardPreview: {
-    position: 'absolute',
+  emptyCard: {
     width: SCREEN_WIDTH * 0.9,
     height: CARD_HEIGHT,
     borderRadius: 20,
-    overflow: 'hidden',
     backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyCardText: {
+    fontSize: 18,
+    color: '#666',
   },
   card: {
-    position: 'absolute',
     width: SCREEN_WIDTH * 0.9,
     height: CARD_HEIGHT,
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#fff',
-    ...SHADOW.card,
-  },
-  cardTouchable: {
-    width: '100%',
-    height: '100%',
+    position: 'relative',
   },
   cardImage: {
     width: '100%',
@@ -553,17 +563,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 160,
+    height: 200,
   },
   cardContent: {
     position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 16,
+    left: 16,
+    right: 16,
+    bottom: 20,
   },
   cardName: {
     color: '#fff',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
     marginBottom: 4,
     textShadowColor: 'rgba(0,0,0,0.5)',
@@ -573,72 +583,65 @@ const styles = StyleSheet.create({
   cardBreed: {
     color: '#fff',
     fontSize: 18,
-    marginBottom: 8,
+    marginBottom: 12,
     opacity: 0.9,
   },
-  badge: {
-    backgroundColor: '#4CAF50',
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  healthBadge: {
+    backgroundColor: '#27AE60',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginTop: 8,
+    borderRadius: 20,
   },
-  badgeText: {
+  healthBadgePending: {
+    backgroundColor: '#F39C12',
+  },
+  healthBadgeText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
+  },
+  reputationScore: {
+    backgroundColor: 'rgba(255, 215, 0, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  reputationText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   cardInfo: {
     color: '#fff',
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 4,
     opacity: 0.9,
   },
   cardPrice: {
     color: '#FFE66D',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     marginTop: 8,
   },
-  overlay: {
-    position: 'absolute',
-    top: 50,
-    zIndex: 10,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 4,
-  },
-  likeOverlay: {
-    right: 30,
-    borderColor: '#4FC978',
-    backgroundColor: 'rgba(79, 201, 120, 0.9)',
-    transform: [{ rotate: '20deg' }],
-  },
-  passOverlay: {
-    left: 30,
-    borderColor: '#FE3C72',
-    backgroundColor: 'rgba(254, 60, 114, 0.9)',
-    transform: [{ rotate: '-20deg' }],
-  },
-  overlayText: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#fff',
-  },
   actionButtons: {
-    position: 'absolute',
-    bottom: 24,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    paddingHorizontal: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 24,
+    paddingVertical: 20,
   },
   actionButton: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
@@ -649,7 +652,7 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
       },
       android: {
-        elevation: 6,
+        elevation: 8,
       },
     }),
   },
@@ -661,25 +664,44 @@ const styles = StyleSheet.create({
   passButton: {
     backgroundColor: '#6C7B7F',
   },
-  saveButton: {
-    backgroundColor: '#E11D48',
+  superButton: {
+    backgroundColor: '#4ECDC4',
   },
   likeButton: {
-    backgroundColor: '#4FC978',
+    backgroundColor: '#FF6B6B',
   },
-  counter: {
-    position: 'absolute',
-    top: 120,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+  recentMatchesContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingBottom: 20,
   },
-  counterText: {
+  recentMatchesTitle: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 18,
     fontWeight: '600',
+    marginBottom: 12,
+  },
+  recentMatchesRow: {
+    gap: 12,
+    paddingRight: 16,
+  },
+  recentMatchItem: {
+    alignItems: 'center',
+  },
+  recentMatchAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  recentMatchImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recentMatchName: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
   },
   modalOverlay: {
     flex: 1,
