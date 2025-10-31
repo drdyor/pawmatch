@@ -68,65 +68,65 @@ export default function NewLitterCard({
         </View>
       </View>
 
-      {/* Breeding Pair */}
-      <View style={styles.pairContainer}>
+      {/* Fused Photo of Breeding Pair */}
+      <TouchableOpacity
+        style={styles.fusedPhotoContainer}
+        onPress={onViewPair}
+        activeOpacity={0.8}
+      >
         <Text style={styles.pairLabel}>Breeding Pair:</Text>
-        
-        <View style={styles.petsRow}>
-          {/* Male Pet */}
-          <TouchableOpacity
-            style={styles.petCard}
-            onPress={onViewPair}
-            activeOpacity={0.7}
-          >
-            <View style={styles.petImageContainer}>
-              <Image
-                source={
-                  litter.malePet.photos && litter.malePet.photos.length > 0
-                    ? { uri: litter.malePet.photos[0] }
-                    : require('../../assets/images/placeholder-pet.png')
-                }
-                style={styles.petImage}
-                resizeMode="cover"
-              />
-              <View style={[styles.genderBadge, styles.genderMale]}>
-                <Text style={styles.genderIcon}>♂</Text>
-              </View>
+        <View style={styles.fusedImageWrapper}>
+          {/* Male Pet - Left Side */}
+          <View style={styles.fusedImageHalf}>
+            <Image
+              source={
+                litter.malePet.photos && litter.malePet.photos.length > 0
+                  ? { uri: litter.malePet.photos[0] }
+                  : require('../../assets/images/placeholder-pet.png')
+              }
+              style={styles.fusedImage}
+              resizeMode="cover"
+            />
+            <View style={[styles.fusedGenderBadge, styles.genderMale]}>
+              <Text style={styles.fusedGenderIcon}>♂</Text>
             </View>
-            <Text style={styles.petName}>{litter.malePet.name}</Text>
-            <Text style={styles.petBreed}>{litter.malePet.breed || 'Mixed'}</Text>
-          </TouchableOpacity>
-
-          {/* Plus Icon */}
-          <View style={styles.plusContainer}>
-            <Text style={styles.plusIcon}>+</Text>
+            <View style={styles.fusedOverlay}>
+              <Text style={styles.fusedName}>{litter.malePet.name}</Text>
+            </View>
           </View>
 
-          {/* Female Pet */}
-          <TouchableOpacity
-            style={styles.petCard}
-            onPress={onViewPair}
-            activeOpacity={0.7}
-          >
-            <View style={styles.petImageContainer}>
-              <Image
-                source={
-                  litter.femalePet.photos && litter.femalePet.photos.length > 0
-                    ? { uri: litter.femalePet.photos[0] }
-                    : require('../../assets/images/placeholder-pet.png')
-                }
-                style={styles.petImage}
-                resizeMode="cover"
-              />
-              <View style={[styles.genderBadge, styles.genderFemale]}>
-                <Text style={styles.genderIcon}>♀</Text>
-              </View>
+          {/* Divider Line */}
+          <View style={styles.fusedDivider}>
+            <Text style={styles.fusedHeart}>💕</Text>
+          </View>
+
+          {/* Female Pet - Right Side */}
+          <View style={styles.fusedImageHalf}>
+            <Image
+              source={
+                litter.femalePet.photos && litter.femalePet.photos.length > 0
+                  ? { uri: litter.femalePet.photos[0] }
+                  : require('../../assets/images/placeholder-pet.png')
+              }
+              style={styles.fusedImage}
+              resizeMode="cover"
+            />
+            <View style={[styles.fusedGenderBadge, styles.genderFemale]}>
+              <Text style={styles.fusedGenderIcon}>♀</Text>
             </View>
-            <Text style={styles.petName}>{litter.femalePet.name}</Text>
-            <Text style={styles.petBreed}>{litter.femalePet.breed || 'Mixed'}</Text>
-          </TouchableOpacity>
+            <View style={styles.fusedOverlay}>
+              <Text style={styles.fusedName}>{litter.femalePet.name}</Text>
+            </View>
+          </View>
         </View>
-      </View>
+        
+        {/* Breed Info Below Fused Photo */}
+        <View style={styles.fusedBreedInfo}>
+          <Text style={styles.fusedBreedText}>
+            {litter.malePet.breed || 'Mixed'} × {litter.femalePet.breed || 'Mixed'}
+          </Text>
+        </View>
+      </TouchableOpacity>
 
       {/* Details */}
       <View style={styles.detailsContainer}>
@@ -273,19 +273,94 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
-  plusContainer: {
+  // Fused Photo Styles
+  fusedPhotoContainer: {
+    marginBottom: 12,
+  },
+  fusedImageWrapper: {
+    flexDirection: 'row',
+    height: 180,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: 8,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  fusedImageHalf: {
+    flex: 1,
+    position: 'relative',
+  },
+  fusedImage: {
+    width: '100%',
+    height: '100%',
+  },
+  fusedDivider: {
+    width: 40,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    borderLeftWidth: 2,
+    borderRightWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  fusedHeart: {
+    fontSize: 24,
+  },
+  fusedGenderBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.neutral,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 8,
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  plusIcon: {
-    fontSize: 20,
-    color: COLORS.textSecondary,
-    fontWeight: '300',
+  fusedGenderIcon: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  fusedOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  fusedName: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  fusedBreedInfo: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.neutral,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  fusedBreedText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.text,
   },
   detailsContainer: {
     marginTop: 12,
