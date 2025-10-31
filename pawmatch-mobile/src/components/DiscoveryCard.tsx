@@ -59,7 +59,6 @@ export default function DiscoveryCard({
 
   return (
     <View style={styles.card}>
-      {/* Image Container */}
       <View style={styles.imageContainer}>
         <Image
           source={
