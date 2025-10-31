@@ -146,27 +146,18 @@ export default function ShelterAddPetScreen({ navigation }: any) {
         photos,
         description: `${description}\n\nTemperament: ${selectedTemperament.join(', ')}\nPersonality: ${selectedPersonality.join(', ')}\nIntake reason: ${intakeReason}`,
         health_records: [],
-        // Save child safety as metadata for easy filtering
+        // Save child safety and other metadata for easy filtering
         metadata: {
-          safeForChildren: safeForChildren, // true, false, or null
+          safeForChildren: safeForChildren, // true = safe, false = not safe, null = unknown (but should never be null due to validation)
           temperament: selectedTemperament,
           personality: selectedPersonality,
-          ...(isUrgent ? {
+          ...(isUrgent || urgencyReason.length > 0 || euthanasiaDate ? {
             urgent: true,
             urgencyReasons: urgencyReason,
             euthanasiaDate: euthanasiaDate || null,
           } : {}),
         },
       };
-
-      // Add urgency metadata
-      if (isUrgent) {
-        petData.metadata = {
-          urgent: true,
-          urgencyReasons: urgencyReason,
-          euthanasiaDate: euthanasiaDate || null,
-        };
-      }
 
       const { error } = await supabase.from('pets').insert(petData);
       if (error) throw error;
