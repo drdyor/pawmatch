@@ -82,7 +82,7 @@ export default function NewLitterCard({
               source={
                 litter.malePet.photos && litter.malePet.photos.length > 0
                   ? { uri: litter.malePet.photos[0] }
-                  : require('../../assets/images/placeholder-pet.png')
+                  : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
               }
               style={styles.fusedImage}
               resizeMode="cover"
@@ -106,7 +106,7 @@ export default function NewLitterCard({
               source={
                 litter.femalePet.photos && litter.femalePet.photos.length > 0
                   ? { uri: litter.femalePet.photos[0] }
-                  : require('../../assets/images/placeholder-pet.png')
+                  : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
               }
               style={styles.fusedImage}
               resizeMode="cover"
@@ -205,73 +205,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  pairContainer: {
-    marginBottom: 12,
-  },
   pairLabel: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: COLORS.text,
     marginBottom: 12,
-  },
-  petsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  petCard: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  petImageContainer: {
-    position: 'relative',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    overflow: 'hidden',
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-  },
-  petImage: {
-    width: '100%',
-    height: '100%',
-  },
-  genderBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  genderMale: {
-    backgroundColor: COLORS.secondary,
-  },
-  genderFemale: {
-    backgroundColor: '#FF69B4',
-  },
-  genderIcon: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  petName: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: COLORS.text,
-    marginBottom: 2,
-    textAlign: 'center',
-  },
-  petBreed: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
   },
   // Fused Photo Styles
   fusedPhotoContainer: {

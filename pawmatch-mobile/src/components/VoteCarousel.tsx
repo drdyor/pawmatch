@@ -53,7 +53,7 @@ export default function VoteCarousel({
                     source={
                       pairing.malePet.photos && pairing.malePet.photos.length > 0
                         ? { uri: pairing.malePet.photos[0] }
-                        : require('../assets/images/placeholder-pet.png')
+                        : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
                     }
                     style={styles.petImage}
                   />
@@ -65,7 +65,7 @@ export default function VoteCarousel({
                     source={
                       pairing.femalePet.photos && pairing.femalePet.photos.length > 0
                         ? { uri: pairing.femalePet.photos[0] }
-                        : require('../assets/images/placeholder-pet.png')
+                        : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
                     }
                     style={styles.petImage}
                   />

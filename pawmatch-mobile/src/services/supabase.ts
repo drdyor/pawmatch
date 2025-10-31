@@ -1,15 +1,19 @@
 // URL polyfill for React Native (Supabase requires it)
 // Import with fallback for Expo Snack compatibility
+// Note: react-native-url-polyfill is in dependencies
 try {
   // Try ES6 import first (works in most environments)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('react-native-url-polyfill/auto');
 } catch (e) {
   // Fallback: try importing from main package
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('react-native-url-polyfill');
   } catch (e2) {
     // Polyfill not available - Supabase will use native URL if available
     // This is OK for most Expo environments
+    console.warn('react-native-url-polyfill not available, using native URL');
   }
 }
 

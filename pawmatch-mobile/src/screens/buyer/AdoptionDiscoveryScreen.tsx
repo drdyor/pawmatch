@@ -37,6 +37,7 @@ export default function AdoptionDiscoveryScreen({ navigation }: any) {
 
   useEffect(() => {
     loadAdoptionListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter]);
 
   const loadAdoptionListings = async () => {
@@ -105,7 +106,7 @@ export default function AdoptionDiscoveryScreen({ navigation }: any) {
             source={
               pet.photos && pet.photos.length > 0
                 ? { uri: pet.photos[0] }
-                : require('../../assets/images/placeholder-pet.png')
+                : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
             }
             style={styles.petImage}
             resizeMode="cover"

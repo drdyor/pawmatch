@@ -20,6 +20,7 @@ export default function NewLittersScreen({ navigation }: any) {
 
   useEffect(() => {
     loadLitters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadLitters = async () => {

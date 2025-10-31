@@ -97,7 +97,7 @@ export default function BuyerFavoritesScreen() {
           source={
             petPhoto
               ? { uri: petPhoto }
-              : require('../../assets/images/placeholder-pet.png')
+              : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
           }
           style={styles.petImage}
           resizeMode="cover"

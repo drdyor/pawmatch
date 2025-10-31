@@ -502,10 +502,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#6B7280',
   },
-  pillTextSelected: {
-    color: '#000',
-    fontWeight: '600',
-  },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',

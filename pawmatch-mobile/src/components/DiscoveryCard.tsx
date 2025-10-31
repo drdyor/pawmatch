@@ -65,7 +65,7 @@ export default function DiscoveryCard({
           source={
             pet.photos && pet.photos.length > 0
               ? { uri: pet.photos[0] }
-              : require('../../assets/images/placeholder-pet.png')
+              : { uri: 'https://via.placeholder.com/400?text=PawMatch' }
           }
           style={styles.image}
           resizeMode="cover"
@@ -133,11 +133,6 @@ export default function DiscoveryCard({
             )}
           </View>
         </View>
-      </View>
-
-      {/* Hidden info section - shows when you tap "Info" button */}
-
-        {/* Action buttons removed - shown separately below card for Tinder-style */}
       </View>
     </View>
   );

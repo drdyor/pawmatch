@@ -205,10 +205,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
-  roleCardSelectedRoleTitle: {
-    color: '#fff',
-  },
-  roleCardSelectedRoleDescription: {
-    color: 'rgba(255,255,255,0.9)',
-  },
 });

@@ -117,6 +117,7 @@ export default function BreedingDiscoveryScreen({ navigation }: any) {
 
   useEffect(() => {
     loadBreedingMatches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter]);
 
   const loadBreedingMatches = async () => {
@@ -247,7 +248,7 @@ export default function BreedingDiscoveryScreen({ navigation }: any) {
               source={
                 pets[currentIndex + 1].photos && pets[currentIndex + 1].photos.length > 0
                   ? { uri: pets[currentIndex + 1].photos[0] }
-                  : require('../../assets/images/placeholder-pet.png')
+                  : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
               }
               style={styles.cardImage}
               resizeMode="cover"
@@ -260,7 +261,7 @@ export default function BreedingDiscoveryScreen({ navigation }: any) {
               source={
                 pets[currentIndex + 2].photos && pets[currentIndex + 2].photos.length > 0
                   ? { uri: pets[currentIndex + 2].photos[0] }
-                  : require('../../assets/images/placeholder-pet.png')
+                  : { uri: 'https://via.placeholder.com/200?text=PawMatch' }
               }
               style={styles.cardImage}
               resizeMode="cover"
@@ -380,63 +381,6 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: '100%',
-  },
-  cardOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 20,
-  },
-  cardInfo: {
-    gap: 8,
-  },
-  cardName: {
-    fontFamily: FONTS.bold,
-    fontSize: 28,
-    color: '#fff',
-  },
-  cardBreed: {
-    fontFamily: FONTS.medium,
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  locationBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 4,
-  },
-  locationText: {
-    fontSize: 12,
-    color: COLORS.text,
-    fontWeight: '500',
-  },
-  cardDescription: {
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-    marginTop: 8,
-  },
-  badgesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  healthBadge: {
-    backgroundColor: COLORS.success,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
   },
   actionsContainer: {
     flexDirection: 'row',
