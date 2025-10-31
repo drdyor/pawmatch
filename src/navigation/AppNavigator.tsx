@@ -47,6 +47,9 @@ import MessagesScreen from '../screens/shared/MessagesScreen';
 import PetDetailScreen from '../screens/shared/PetDetailScreen';
 import ChatThreadScreen from '../screens/shared/ChatThreadScreen';
 
+// Community Screen
+import CommunityVotingScreen from '../screens/community/CommunityVotingScreen';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -141,6 +144,7 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
               <>
                 <Stack.Screen name="BuyerMain" component={BuyerTabs} />
                 <Stack.Screen name="BuyerPreferences" component={BuyerPreferencesScreen} />
+                <Stack.Screen name="CommunityVoting" component={CommunityVotingScreen} />
               </>
             )}
             {(userRole === 'breeder_registered' || userRole === 'breeder_independent') && (
@@ -162,6 +166,7 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
             <Stack.Screen name="Messages" component={MessagesScreen} />
             <Stack.Screen name="PetDetail" component={PetDetailScreen} />
             <Stack.Screen name="ChatThread" component={ChatThreadScreen} />
+            <Stack.Screen name="CommunityVoting" component={CommunityVotingScreen} />
           </>
         )}
       </Stack.Navigator>

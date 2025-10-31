@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,43 +7,47 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Animated,
-  PanResponder,
   Dimensions,
+  Platform,
+  Modal,
+  ScrollView,
 } from 'react-native';
+import Swiper from 'react-native-deck-swiper';
+import { LinearGradient } from 'expo-linear-gradient';
+import { FilterChips } from '../../components/FilterChips';
+import { MatchCelebration } from '../../components/MatchCelebration';
+import { PALETTE, SHADOW } from '../../theme/palette';
 import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
 import { Listing, Pet } from '../../types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const CARD_HEIGHT = Math.min(600, SCREEN_HEIGHT * 0.7);
 
 type LitterCard = Listing & { pet: Pet };
 
+const FILTER_CHIPS = [
+  { id: 'all', label: 'All Pets' },
+  { id: 'dogs', label: 'Dogs' },
+  { id: 'cats', label: 'Cats' },
+  { id: 'breeders', label: 'Breeding' },
+  { id: 'adoption', label: 'Adoption' },
+  { id: 'verified', label: 'Verified' },
+  { id: 'puppies', label: 'Puppies' },
+  { id: 'maltese', label: 'Maltese Dogs' },
+  { id: 'local', label: 'Local Breeders' },
+];
+
 export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   const [cards, setCards] = useState<LitterCard[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [selectedCard, setSelectedCard] = useState<LitterCard | null>(null);
+  const [matchVisible, setMatchVisible] = useState(false);
+  const [matchedPet, setMatchedPet] = useState<string>('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
-  const position = useRef(new Animated.ValueXY()).current;
-  const rotation = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-15deg', '0deg', '15deg'],
-    extrapolate: 'clamp',
-  });
-
-  const likeOpacity = position.x.interpolate({
-    inputRange: [0, SCREEN_WIDTH / 4],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const nopeOpacity = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 4, 0],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  const swiperRef = useRef<any>(null);
 
   useEffect(() => {
     loadCards();
@@ -51,7 +55,6 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   }, []);
 
   const setupRealtimeSubscription = () => {
-    // Subscribe to new listings
     const channel = supabase
       .channel('new_listings')
       .on(
@@ -63,7 +66,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
           filter: 'status=eq.live',
         },
         () => {
-          loadCards(); // Refresh deck
+          loadCards();
         }
       )
       .subscribe();
@@ -77,7 +80,6 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get user preferences
       let userPrefs: any = null;
       if (user) {
         const { data } = await supabase
@@ -88,7 +90,6 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
         userPrefs = data;
       }
 
-      // Fetch live listings
       const { data, error } = await supabase
         .from('listings')
         .select(`*, pet:pets(*)`)
@@ -99,305 +100,603 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
 
       if (error) throw error;
 
-      // Filter by preferences
       let filtered = data || [];
       if (userPrefs?.preferred_species && userPrefs.preferred_species !== 'both') {
         filtered = filtered.filter((l: any) => l.pet?.species === userPrefs.preferred_species);
       }
 
       setCards(filtered as LitterCard[]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading cards:', error);
+      Alert.alert('Error', 'Failed to load listings');
     } finally {
       setLoading(false);
     }
   };
 
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderMove: (_, gesture) => {
-      position.setValue({ x: gesture.dx, y: gesture.dy });
-    },
-    onPanResponderRelease: (_, gesture) => {
-      if (gesture.dx > SWIPE_THRESHOLD) {
-        forceSwipe('right');
-      } else if (gesture.dx < -SWIPE_THRESHOLD) {
-        forceSwipe('left');
-      } else {
-        resetPosition();
-      }
-    },
-  });
+  const filteredCards = React.useMemo(() => {
+    let filtered = cards;
+    
+    switch (activeFilter) {
+      case 'dogs':
+        filtered = filtered.filter(c => c.pet?.species === 'dog');
+        break;
+      case 'cats':
+        filtered = filtered.filter(c => c.pet?.species === 'cat');
+        break;
+      case 'adoption':
+        filtered = filtered.filter(c => c.type === 'adoption');
+        break;
+      case 'breeders':
+        filtered = filtered.filter(c => c.type === 'litter_announcement');
+        break;
+      case 'puppies':
+        filtered = filtered.filter(c => {
+          if (!c.pet?.date_of_birth) return false;
+          const age = new Date().getFullYear() - new Date(c.pet.date_of_birth).getFullYear();
+          return age < 1;
+        });
+        break;
+      case 'maltese':
+        filtered = filtered.filter(c => 
+          c.pet?.breed?.toLowerCase().includes('maltese')
+        );
+        break;
+    }
+    
+    return filtered;
+  }, [cards, activeFilter]);
 
-  const forceSwipe = (direction: 'left' | 'right') => {
-    const x = direction === 'right' ? SCREEN_WIDTH + 100 : -SCREEN_WIDTH - 100;
-    Animated.timing(position, {
-      toValue: { x, y: 0 },
-      duration: 250,
-      useNativeDriver: false,
-    }).start(() => {
-      if (direction === 'right') {
-        handleLike();
-      } else {
-        handlePass();
-      }
-      position.setValue({ x: 0, y: 0 });
-      setCurrentIndex(prev => prev + 1);
-    });
-  };
-
-  const resetPosition = () => {
-    Animated.spring(position, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const handleLike = async () => {
-    const card = cards[currentIndex];
+  const handleSwipeRight = useCallback(async (index: number) => {
+    const card = filteredCards[index];
     if (!card) return;
 
-    setFavorites(prev => new Set(prev).add(card.id));
-    
-    // Save to database
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       await supabase.from('favorites').insert({
         user_id: user.id,
         listing_id: card.id,
       });
+
+      setFavorites(prev => new Set(prev).add(card.id));
+      setMatchedPet(card.pet?.name || 'Pet');
+      setMatchVisible(true);
+    } catch (error: any) {
+      console.error('Error saving favorite:', error);
     }
+  }, [filteredCards]);
 
-    Alert.alert('❤️ Saved!', "You'll get updates about this litter.");
-  };
+  const handleSwipeTop = useCallback(async (index: number) => {
+    await handleSwipeRight(index);
+  }, [handleSwipeRight]);
 
-  const handlePass = () => {
-    // Just move to next
-  };
-
-  const handleDetail = () => {
-    const card = cards[currentIndex];
-    if (card) {
-      navigation.navigate('PetDetail', {
-        petId: card.pet.id,
-        listingId: card.id,
-      });
-    }
-  };
+  const handleSwipeLeft = useCallback((index: number) => {
+    console.log('Passed on:', filteredCards[index]?.pet?.name);
+  }, [filteredCards]);
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading litters...</Text>
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={PALETTE.primary} />
+        <Text style={styles.loadingText}>Loading pets...</Text>
       </View>
     );
   }
 
-  if (currentIndex >= cards.length) {
+  if (filteredCards.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyIcon}>✨</Text>
-        <Text style={styles.emptyTitle}>No more nearby litters</Text>
-        <Text style={styles.emptyText}>
-          Widen your filters or follow more breeders to get alerts
-        </Text>
-        <View style={styles.emptyActions}>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => navigation.navigate('BuyerPreferences')}
-          >
-            <Text style={styles.filterButtonText}>Adjust Filters</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={() => {
-              setCurrentIndex(0);
-              loadCards();
-            }}
-          >
-            <Text style={styles.refreshButtonText}>Refresh</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.centered}>
+        <Text style={styles.emptyText}>No pets found</Text>
+        <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={loadCards}
+        >
+          <Text style={styles.refreshButtonText}>Refresh</Text>
+        </TouchableOpacity>
       </View>
     );
   }
-
-  const currentCard = cards[currentIndex];
-  const nextCard = cards[currentIndex + 1];
 
   return (
-    <View style={styles.container}>
-      {/* Filter Bar */}
-      <TouchableOpacity
-        style={styles.filterBar}
-        onPress={() => navigation.navigate('BuyerPreferences')}
-      >
-        <Text style={styles.filterBarText}>🔎 Breeds · € · Preferences</Text>
-      </TouchableOpacity>
+    <LinearGradient
+      colors={['#667eea', '#764ba2']}
+      style={styles.container}
+    >
+      {/* Malta Header */}
+      <View style={styles.header}>
+        <View style={styles.flag}>
+          <Text style={styles.flagText}>🇲🇹</Text>
+        </View>
+        <Text style={styles.headerTitle}>PawMatch Malta</Text>
+        <Text style={styles.headerSubtitle}>Find your perfect furry companion</Text>
+      </View>
 
-      {/* Card Stack */}
-      <View style={styles.cardContainer}>
-        {/* Next card preview */}
-        {nextCard && (
-          <View style={[styles.cardPreview, { opacity: 0.5, transform: [{ scale: 0.95 }] }]}>
-            <View style={styles.cardImageContainer}>
-              {nextCard.pet.photos?.[0] ? (
+      {/* Filter Chips */}
+      <View style={styles.filterContainer}>
+        <FilterChips
+          chips={FILTER_CHIPS}
+          activeId={activeFilter}
+          onChange={setActiveFilter}
+        />
+      </View>
+
+      {/* Swipe Deck */}
+      <View style={styles.deckContainer}>
+        <Swiper
+          ref={swiperRef}
+          cards={filteredCards}
+          renderCard={(card: LitterCard | undefined) => {
+            if (!card || !card.pet) {
+              return <View style={styles.card} />;
+            }
+
+            return (
+              <TouchableOpacity
+                style={[styles.card, SHADOW.card]}
+                onPress={() => setSelectedCard(card)}
+                activeOpacity={0.9}
+              >
                 <Image
-                  source={{ uri: nextCard.pet.photos[0] }}
+                  source={{
+                    uri: card.pet.photos?.[0] || card.photos?.[0] || 'https://via.placeholder.com/400x600'
+                  }}
                   style={styles.cardImage}
                   resizeMode="cover"
                 />
-              ) : (
-                <View style={styles.placeholderImage}>
-                  <Text style={styles.placeholderEmoji}>🐾</Text>
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.75)']}
+                  style={styles.cardGradient}
+                />
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardName}>{card.pet.name}</Text>
+                  <Text style={styles.cardBreed}>{card.pet.breed}</Text>
+                  {card.pet.status === 'available' && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>Available</Text>
+                    </View>
+                  )}
+                  {card.type === 'litter_announcement' && (
+                    <Text style={styles.cardInfo}>
+                      {card.pups_available || 'Several'} puppies available
+                    </Text>
+                  )}
+                  {card.price && card.price > 0 && (
+                    <Text style={styles.cardPrice}>€{card.price}</Text>
+                  )}
                 </View>
-              )}
-            </View>
+              </TouchableOpacity>
+            );
+          }}
+          onSwipedLeft={handleSwipeLeft}
+          onSwipedRight={handleSwipeRight}
+          onSwipedTop={handleSwipeTop}
+          onTapCard={(index: number) => {
+            setSelectedCard(filteredCards[index]);
+          }}
+          cardIndex={0}
+          backgroundColor="transparent"
+          stackSize={3}
+          stackScale={0.92}
+          stackSeparation={16}
+          disableTopSwipe={false}
+          animateCardOpacity
+          overlayLabels={{
+            left: {
+              title: 'NOPE',
+              style: {
+                label: {
+                  backgroundColor: '#FE3C72',
+                  borderColor: '#FE3C72',
+                  color: '#fff',
+                  borderWidth: 2,
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  justifyContent: 'flex-start',
+                  marginTop: 30,
+                  marginLeft: -30,
+                },
+              },
+            },
+            right: {
+              title: 'LIKE',
+              style: {
+                label: {
+                  backgroundColor: '#4FC978',
+                  borderColor: '#4FC978',
+                  color: '#fff',
+                  borderWidth: 2,
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-start',
+                  marginTop: 30,
+                  marginLeft: 30,
+                },
+              },
+            },
+            top: {
+              title: 'SAVE',
+              style: {
+                label: {
+                  backgroundColor: '#E11D48',
+                  borderColor: '#E11D48',
+                  color: '#fff',
+                  borderWidth: 2,
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                },
+                wrapper: {
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  marginTop: 20,
+                },
+              },
+            },
+          }}
+        />
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.passButton]}
+            onPress={() => swiperRef.current?.swipeLeft()}
+          >
+            <Text style={styles.actionButtonText}>✕</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.saveButton]}
+            onPress={() => swiperRef.current?.swipeTop()}
+          >
+            <Text style={styles.actionButtonText}>★</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.likeButton]}
+            onPress={() => swiperRef.current?.swipeRight()}
+          >
+            <Text style={styles.actionButtonText}>♥</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Card Counter */}
+        {filteredCards.length > 0 && (
+          <View style={styles.counter}>
+            <Text style={styles.counterText}>
+              {filteredCards.length} {filteredCards.length === 1 ? 'pet' : 'pets'} available
+            </Text>
           </View>
         )}
+      </View>
 
-        {/* Current card */}
-        <Animated.View
-          style={[
-            styles.card,
-            {
-              transform: [{ translateX: position.x }, { translateY: position.y }, { rotate: rotation }],
-            },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {/* SAVE overlay */}
-          <Animated.View style={[styles.overlay, styles.saveOverlay, { opacity: likeOpacity }]}>
-            <Text style={styles.overlayText}>SAVE</Text>
-          </Animated.View>
+      {/* Match Celebration */}
+      <MatchCelebration
+        visible={matchVisible}
+        name={matchedPet}
+        onClose={() => setMatchVisible(false)}
+      />
 
-          {/* PASS overlay */}
-          <Animated.View style={[styles.overlay, styles.passOverlay, { opacity: nopeOpacity }]}>
-            <Text style={styles.overlayText}>PASS</Text>
-          </Animated.View>
-
-          {/* Card Image */}
-          <View style={styles.cardImageContainer}>
-            {currentCard.pet.photos?.[0] ? (
-              <Image
-                source={{ uri: currentCard.pet.photos[0] }}
-                style={styles.cardImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderEmoji}>
-                  {currentCard.pet.species === 'dog' ? '🐕' : '🐈'}
-                </Text>
-              </View>
+      {/* Pet Details Modal */}
+      <Modal
+        visible={!!selectedCard}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedCard(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setSelectedCard(null)}
+            >
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+            {selectedCard && selectedCard.pet && (
+              <ScrollView>
+                <Image
+                  source={{
+                    uri: selectedCard.pet.photos?.[0] || 'https://via.placeholder.com/400'
+                  }}
+                  style={styles.modalImage}
+                />
+                <View style={styles.modalDetails}>
+                  <Text style={styles.modalName}>{selectedCard.pet.name}</Text>
+                  <Text style={styles.modalBreed}>{selectedCard.pet.breed}</Text>
+                  <Text style={styles.modalDescription}>
+                    {selectedCard.description || 'No description available.'}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={() => {
+                      navigation.navigate('PetDetail', { listingId: selectedCard.id });
+                      setSelectedCard(null);
+                    }}
+                  >
+                    <Text style={styles.modalButtonText}>View Full Details</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             )}
           </View>
-
-          {/* Card Info */}
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardBreed}>{currentCard.pet.breed}</Text>
-            <Text style={styles.cardLocation}>
-              {currentCard.city}, {currentCard.country}
-            </Text>
-            <Text style={styles.cardPrice}>
-              €{(currentCard.price / 100).toFixed(0)}
-              {currentCard.pupsAvailable && ` · ${currentCard.pupsAvailable} available`}
-            </Text>
-            {currentCard.availableDate && (
-              <Text style={styles.cardDate}>
-                Ready: {new Date(currentCard.availableDate).toLocaleDateString()}
-              </Text>
-            )}
-            <View style={styles.badges}>
-              {currentCard.deposit && (
-                <Pill text={`Deposit €${(currentCard.deposit / 100).toFixed(0)}`} />
-              )}
-              <Pill text="Health checked" />
-            </View>
-          </View>
-        </Animated.View>
-      </View>
-
-      {/* Bottom Actions */}
-      <View style={styles.actions}>
-        <CircleButton
-          icon="✖️"
-          color={colors.danger}
-          onPress={() => forceSwipe('left')}
-        />
-        <CircleButton
-          icon="ℹ️"
-          color={colors.secondary}
-          onPress={handleDetail}
-          size="large"
-        />
-        <CircleButton
-          icon="❤️"
-          color={colors.success}
-          onPress={() => forceSwipe('right')}
-        />
-      </View>
-
-      {/* Counter */}
-      <View style={styles.counter}>
-        <Text style={styles.counterText}>
-          {currentIndex + 1} / {cards.length}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function Pill({ text }: { text: string }) {
-  return (
-    <View style={styles.pill}>
-      <Text style={styles.pillText}>{text}</Text>
-    </View>
-  );
-}
-
-function CircleButton({
-  icon,
-  color,
-  onPress,
-  size = 'normal',
-}: {
-  icon: string;
-  color: string;
-  onPress: () => void;
-  size?: 'normal' | 'large';
-}) {
-  const buttonSize = size === 'large' ? 72 : 64;
-  
-  return (
-    <TouchableOpacity
-      style={[
-        styles.circleButton,
-        { backgroundColor: color, width: buttonSize, height: buttonSize, borderRadius: buttonSize / 2 },
-      ]}
-      onPress={onPress}
-    >
-      <Text style={[styles.circleIcon, size === 'large' && { fontSize: 32 }]}>{icon}</Text>
-    </TouchableOpacity>
+        </View>
+      </Modal>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8F0',
   },
-  centerContainer: {
+  centered: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#FFF8F0',
   },
   loadingText: {
     marginTop: 12,
+    color: PALETTE.textSecondary,
     fontSize: 16,
-    color: '#6B7280',
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: PALETTE.text,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: PALETTE.textSecondary,
+  },
+  refreshButton: {
+    marginTop: 16,
+    backgroundColor: PALETTE.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  refreshButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  header: {
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    paddingBottom: 12,
+  },
+  flag: {
+    width: 44,
+    height: 30,
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  flagText: {
+    fontSize: 16,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    color: '#ffffffcc',
+    fontSize: 14,
+  },
+  filterContainer: {
+    marginBottom: 12,
+  },
+  deckContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    width: SCREEN_WIDTH * 0.9,
+    height: CARD_HEIGHT,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    position: 'relative',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 160,
+  },
+  cardContent: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: 16,
+  },
+  cardName: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  cardBreed: {
+    color: '#fff',
+    fontSize: 18,
+    marginBottom: 8,
+    opacity: 0.9,
+  },
+  badge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardInfo: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 8,
+    opacity: 0.9,
+  },
+  cardPrice: {
+    color: '#FFE66D',
+    fontSize: 20,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  actionButtons: {
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 40,
+  },
+  actionButton: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 24,
+  },
+  passButton: {
+    backgroundColor: '#6C7B7F',
+  },
+  saveButton: {
+    backgroundColor: '#E11D48',
+  },
+  likeButton: {
+    backgroundColor: '#4FC978',
+  },
+  counter: {
+    position: 'absolute',
+    top: 120,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  counterText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: SCREEN_WIDTH * 0.95,
+    height: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  modalClose: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalImage: {
+    width: '100%',
+    height: '48%',
+  },
+  modalDetails: {
+    padding: 20,
+  },
+  modalName: {
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  modalBreed: {
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 16,
+  },
+  modalDescription: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#555',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: PALETTE.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
   },
   filterBar: {
     position: 'absolute',
