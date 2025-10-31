@@ -1,4 +1,11 @@
-import 'react-native-url-polyfill/auto';
+// URL polyfill for React Native (Supabase requires it)
+try {
+  require('react-native-url-polyfill/auto');
+} catch (e) {
+  // Polyfill not available - Supabase may have fallbacks
+  console.warn('URL polyfill not available, Supabase may have limited functionality');
+}
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
