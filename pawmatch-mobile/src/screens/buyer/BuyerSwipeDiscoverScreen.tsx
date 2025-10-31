@@ -1,3 +1,4 @@
+// screens/buyer/BuyerSwipeDiscoverScreen.tsx - Web App Design
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -10,8 +11,10 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
-import { colors } from '../../theme/colors';
+import { COLORS, FONTS } from '../../theme';
 import { supabase } from '../../services/supabase';
 import { Listing, Pet } from '../../types';
 
@@ -20,11 +23,32 @@ const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
 type LitterCard = Listing & { pet: Pet };
 
+type FilterType = 'all' | 'dogs' | 'cats' | 'breeders' | 'adoption' | 'verified' | 'puppies' | 'pharaoh' | 'maltese' | 'local';
+
+const FILTERS: { id: FilterType; label: string }[] = [
+  { id: 'all', label: 'All Pets' },
+  { id: 'dogs', label: 'Dogs' },
+  { id: 'cats', label: 'Cats' },
+  { id: 'breeders', label: 'Breeding' },
+  { id: 'adoption', label: 'Adoption' },
+  { id: 'verified', label: 'Verified' },
+  { id: 'puppies', label: 'Puppies' },
+  { id: 'pharaoh', label: 'Pharaoh Hounds' },
+  { id: 'maltese', label: 'Maltese Dogs' },
+  { id: 'local', label: 'Local Breeders' },
+];
+
 export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   const [cards, setCards] = useState<LitterCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [recentMatches] = useState([
+    { id: '1', name: 'Luna', emoji: '🐕' },
+    { id: '2', name: 'Whiskers', emoji: '🐱' },
+    { id: '3', name: 'Max', emoji: '🦮' },
+    { id: '4', name: 'Rocky', emoji: '🐶' },
+  ]);
 
   const position = useRef(new Animated.ValueXY()).current;
   const rotation = position.x.interpolate({
@@ -47,37 +71,13 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
 
   useEffect(() => {
     loadCards();
-    setupRealtimeSubscription();
-  }, []);
-
-  const setupRealtimeSubscription = () => {
-    // Subscribe to new listings
-    const channel = supabase
-      .channel('new_listings')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'listings',
-          filter: 'status=eq.live',
-        },
-        () => {
-          loadCards(); // Refresh deck
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+  }, [activeFilter]);
 
   const loadCards = async () => {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get user preferences
       let userPrefs: any = null;
       if (user) {
         const { data } = await supabase
@@ -88,8 +88,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
         userPrefs = data;
       }
 
-      // Fetch live listings
-      const { data, error } = await supabase
+      let query = supabase
         .from('listings')
         .select(`*, pet:pets(*)`)
         .eq('status', 'live')
@@ -97,9 +96,17 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
         .order('created_at', { ascending: false })
         .limit(50);
 
+      // Apply filters
+      if (activeFilter === 'dogs') {
+        query = query.contains('pet', { species: 'dog' });
+      } else if (activeFilter === 'cats') {
+        query = query.contains('pet', { species: 'cat' });
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
 
-      // Filter by preferences
       let filtered = data || [];
       if (userPrefs?.preferred_species && userPrefs.preferred_species !== 'both') {
         filtered = filtered.filter((l: any) => l.pet?.species === userPrefs.preferred_species);
@@ -157,9 +164,6 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     const card = cards[currentIndex];
     if (!card) return;
 
-    setFavorites(prev => new Set(prev).add(card.id));
-    
-    // Save to database
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from('favorites').insert({
@@ -168,28 +172,18 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       });
     }
 
-    Alert.alert('❤️ Saved!', 'You'll get updates about this litter.');
+    Alert.alert('❤️ It\'s a Match!', `You and ${card.pet.name || card.pet.breed} are perfect together!`);
   };
 
   const handlePass = () => {
     // Just move to next
   };
 
-  const handleDetail = () => {
-    const card = cards[currentIndex];
-    if (card) {
-      navigation.navigate('PetDetail', {
-        petId: card.pet.id,
-        listingId: card.id,
-      });
-    }
-  };
-
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading litters...</Text>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading pets...</Text>
       </View>
     );
   }
@@ -198,246 +192,368 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>✨</Text>
-        <Text style={styles.emptyTitle}>No more nearby litters</Text>
+        <Text style={styles.emptyTitle}>No more nearby pets</Text>
         <Text style={styles.emptyText}>
           Widen your filters or follow more breeders to get alerts
         </Text>
-        <View style={styles.emptyActions}>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => navigation.navigate('BuyerPreferences')}
-          >
-            <Text style={styles.filterButtonText}>Adjust Filters</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={() => {
-              setCurrentIndex(0);
-              loadCards();
-            }}
-          >
-            <Text style={styles.refreshButtonText}>Refresh</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     );
   }
 
   const currentCard = cards[currentIndex];
   const nextCard = cards[currentIndex + 1];
+  const showBreedingIndicator = currentCard.type === 'litter_announcement' || currentCard.pupsAvailable;
 
   return (
     <View style={styles.container}>
-      {/* Filter Bar */}
-      <TouchableOpacity
-        style={styles.filterBar}
-        onPress={() => navigation.navigate('BuyerPreferences')}
-      >
-        <Text style={styles.filterBarText}>🔎 Breeds · € · Preferences</Text>
-      </TouchableOpacity>
+      <StatusBar barStyle="light-content" />
+      
+      {/* Gradient Background */}
+      <View style={styles.gradientBackground} />
 
-      {/* Card Stack */}
-      <View style={styles.cardContainer}>
-        {/* Next card preview */}
-        {nextCard && (
-          <View style={[styles.cardPreview, { opacity: 0.5, transform: [{ scale: 0.95 }] }]}>
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Malta Flag Header */}
+        <View style={styles.header}>
+          <View style={styles.flagContainer}>
+            <View style={styles.maltaFlag}>
+              <Text style={styles.flag}>🇲🇹</Text>
+            </View>
+            <Text style={styles.title}>PawMatch Malta</Text>
+          </View>
+          <Text style={styles.subtitle}>Find your perfect furry companion in Malta</Text>
+        </View>
+
+        {/* Enhanced Filter Chips */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterContainer}
+          contentContainerStyle={styles.filterContent}
+        >
+          {FILTERS.map((filter) => (
+            <TouchableOpacity
+              key={filter.id}
+              style={[
+                styles.filterChip,
+                activeFilter === filter.id && styles.filterChipActive,
+              ]}
+              onPress={() => setActiveFilter(filter.id)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  activeFilter === filter.id && styles.filterChipTextActive,
+                ]}
+              >
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Swipe Cards Container */}
+        <View style={styles.cardStackContainer}>
+          {nextCard && (
+            <View style={[styles.cardPreview]}>
+              <View style={styles.cardImageContainer}>
+                {nextCard.pet.photos?.[0] ? (
+                  <Image
+                    source={{ uri: nextCard.pet.photos[0] }}
+                    style={styles.cardImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.placeholderImage}>
+                    <Text style={styles.placeholderEmoji}>🐾</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Current card */}
+          <Animated.View
+            style={[
+              styles.card,
+              {
+                transform: [
+                  { translateX: position.x },
+                  { translateY: position.y },
+                  { rotate: rotation },
+                ],
+              },
+            ]}
+            {...panResponder.panHandlers}
+          >
+            {/* LIKE overlay */}
+            <Animated.View style={[styles.overlay, styles.likeOverlay, { opacity: likeOpacity }]}>
+              <Text style={styles.overlayText}>LIKE</Text>
+            </Animated.View>
+
+            {/* NOPE overlay */}
+            <Animated.View style={[styles.overlay, styles.nopeOverlay, { opacity: nopeOpacity }]}>
+              <Text style={styles.overlayText}>NOPE</Text>
+            </Animated.View>
+
+            {/* Card Image */}
             <View style={styles.cardImageContainer}>
-              {nextCard.pet.photos?.[0] ? (
+              {currentCard.pet.photos?.[0] ? (
                 <Image
-                  source={{ uri: nextCard.pet.photos[0] }}
+                  source={{ uri: currentCard.pet.photos[0] }}
                   style={styles.cardImage}
                   resizeMode="cover"
                 />
               ) : (
                 <View style={styles.placeholderImage}>
-                  <Text style={styles.placeholderEmoji}>🐾</Text>
+                  <Text style={styles.placeholderEmoji}>
+                    {currentCard.pet.species === 'dog' ? '🐕' : '🐈'}
+                  </Text>
+                </View>
+              )}
+
+              {/* Location Badge */}
+              <View style={styles.locationBadge}>
+                <Text style={styles.locationBadgeText}>
+                  📍 {currentCard.city || 'Malta'}, {currentCard.country || 'MT'}
+                </Text>
+              </View>
+
+              {/* Breeding Indicator */}
+              {showBreedingIndicator && (
+                <View style={styles.breedingIndicator}>
+                  <Text style={styles.breedingIndicatorText}>
+                    🐕 Breeding
+                  </Text>
                 </View>
               )}
             </View>
-          </View>
-        )}
 
-        {/* Current card */}
-        <Animated.View
-          style={[
-            styles.card,
-            {
-              transform: [{ translateX: position.x }, { translateY: position.y }, { rotate: rotation }],
-            },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {/* SAVE overlay */}
-          <Animated.View style={[styles.overlay, styles.saveOverlay, { opacity: likeOpacity }]}>
-            <Text style={styles.overlayText}>SAVE</Text>
-          </Animated.View>
-
-          {/* PASS overlay */}
-          <Animated.View style={[styles.overlay, styles.passOverlay, { opacity: nopeOpacity }]}>
-            <Text style={styles.overlayText}>PASS</Text>
-          </Animated.View>
-
-          {/* Card Image */}
-          <View style={styles.cardImageContainer}>
-            {currentCard.pet.photos?.[0] ? (
-              <Image
-                source={{ uri: currentCard.pet.photos[0] }}
-                style={styles.cardImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderEmoji}>
-                  {currentCard.pet.species === 'dog' ? '🐕' : '🐈'}
-                </Text>
+            {/* Card Info */}
+            <View style={styles.cardInfo}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardBreed}>{currentCard.pet.breed || 'Pet'}</Text>
+                {currentCard.pupsAvailable && (
+                  <View style={styles.reputationBadge}>
+                    <Text style={styles.reputationText}>
+                      ⭐ {currentCard.pupsAvailable} available
+                    </Text>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
+              
+              <View style={styles.badges}>
+                <View style={styles.healthBadge}>
+                  <Text style={styles.healthBadgeText}>✅ Vet-Verified</Text>
+                </View>
+                {currentCard.deposit && (
+                  <View style={styles.pill}>
+                    <Text style={styles.pillText}>
+                      Deposit €{(currentCard.deposit / 100).toFixed(0)}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-          {/* Card Info */}
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardBreed}>{currentCard.pet.breed}</Text>
-            <Text style={styles.cardLocation}>
-              {currentCard.city}, {currentCard.country}
-            </Text>
-            <Text style={styles.cardPrice}>
-              €{(currentCard.price / 100).toFixed(0)}
-              {currentCard.pupsAvailable && ` · ${currentCard.pupsAvailable} available`}
-            </Text>
-            {currentCard.availableDate && (
-              <Text style={styles.cardDate}>
-                Ready: {new Date(currentCard.availableDate).toLocaleDateString()}
+              <Text style={styles.cardPrice}>
+                €{(currentCard.price / 100).toFixed(0)}
               </Text>
-            )}
-            <View style={styles.badges}>
-              {currentCard.deposit && (
-                <Pill text={`Deposit €${(currentCard.deposit / 100).toFixed(0)}`} />
+              {currentCard.availableDate && (
+                <Text style={styles.cardDate}>
+                  Ready: {new Date(currentCard.availableDate).toLocaleDateString()}
+                </Text>
               )}
-              <Pill text="Health checked" />
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.passButton]}
+            onPress={() => forceSwipe('left')}
+          >
+            <Text style={styles.actionIcon}>✕</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.superButton]}
+            onPress={() => forceSwipe('right')}
+          >
+            <Text style={styles.actionIcon}>⭐</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.likeButton]}
+            onPress={() => forceSwipe('right')}
+          >
+            <Text style={styles.actionIcon}>♥</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Recent Matches */}
+        <View style={styles.recentMatchesSection}>
+          <Text style={styles.sectionTitle}>Recent Matches</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.matchesContainer}
+          >
+            {recentMatches.map((match) => (
+              <View key={match.id} style={styles.matchItem}>
+                <View style={styles.matchAvatar}>
+                  <Text style={styles.matchEmoji}>{match.emoji}</Text>
+                </View>
+                <Text style={styles.matchName}>{match.name}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Malta Pet Statistics */}
+        <View style={styles.statsContainer}>
+          <Text style={styles.statsTitle}>Malta Pet Community</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>96K+</Text>
+              <Text style={styles.statLabel}>Registered Dogs</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>85K+</Text>
+              <Text style={styles.statLabel}>Pet Owners</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>50+</Text>
+              <Text style={styles.statLabel}>Vet Clinics</Text>
             </View>
           </View>
-        </Animated.View>
-      </View>
-
-      {/* Bottom Actions */}
-      <View style={styles.actions}>
-        <CircleButton
-          icon="✖️"
-          color={colors.danger}
-          onPress={() => forceSwipe('left')}
-        />
-        <CircleButton
-          icon="ℹ️"
-          color={colors.secondary}
-          onPress={handleDetail}
-          size="large"
-        />
-        <CircleButton
-          icon="❤️"
-          color={colors.success}
-          onPress={() => forceSwipe('right')}
-        />
-      </View>
-
-      {/* Counter */}
-      <View style={styles.counter}>
-        <Text style={styles.counterText}>
-          {currentIndex + 1} / {cards.length}
-        </Text>
-      </View>
+        </View>
+      </ScrollView>
     </View>
-  );
-}
-
-function Pill({ text }: { text: string }) {
-  return (
-    <View style={styles.pill}>
-      <Text style={styles.pillText}>{text}</Text>
-    </View>
-  );
-}
-
-function CircleButton({
-  icon,
-  color,
-  onPress,
-  size = 'normal',
-}: {
-  icon: string;
-  color: string;
-  onPress: () => void;
-  size?: 'normal' | 'large';
-}) {
-  const buttonSize = size === 'large' ? 72 : 64;
-  
-  return (
-    <TouchableOpacity
-      style={[
-        styles.circleButton,
-        { backgroundColor: color, width: buttonSize, height: buttonSize, borderRadius: buttonSize / 2 },
-      ]}
-      onPress={onPress}
-    >
-      <Text style={[styles.circleIcon, size === 'large' && { fontSize: 32 }]}>{icon}</Text>
-    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8F0',
+  },
+  gradientBackground: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: COLORS.backgroundGradientStart,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF8F0',
+    backgroundColor: COLORS.backgroundGradientStart,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6B7280',
+    color: '#fff',
   },
-  filterBar: {
-    position: 'absolute',
-    top: 60,
-    alignSelf: 'center',
-    backgroundColor: colors.background,
+  header: {
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    zIndex: 10,
   },
-  filterBarText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2F3A4A',
+  flagContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
-  cardContainer: {
-    flex: 1,
+  maltaFlag: {
+    width: 32,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: COLORS.maltaBlue,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
+  },
+  flag: {
+    fontSize: 16,
+  },
+  title: {
+    fontFamily: FONTS.hero,
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: FONTS.medium,
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  filterContainer: {
+    marginBottom: 20,
+  },
+  filterContent: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  filterChipActive: {
+    backgroundColor: '#fff',
+    borderColor: '#fff',
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  filterChipTextActive: {
+    color: COLORS.text,
+  },
+  cardStackContainer: {
+    height: 500,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   cardPreview: {
     position: 'absolute',
     width: SCREEN_WIDTH - 40,
-    height: '75%',
-    backgroundColor: colors.background,
-    borderRadius: 24,
+    height: 450,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    opacity: 0.5,
+    transform: [{ scale: 0.95 }],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    overflow: 'hidden',
   },
   card: {
     position: 'absolute',
     width: SCREEN_WIDTH - 40,
-    height: '75%',
-    backgroundColor: colors.background,
-    borderRadius: 24,
+    height: 450,
+    backgroundColor: '#fff',
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -453,24 +569,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 4,
   },
-  saveOverlay: {
+  likeOverlay: {
     right: 30,
-    borderColor: colors.success,
+    borderColor: COLORS.success,
     transform: [{ rotate: '20deg' }],
   },
-  passOverlay: {
+  nopeOverlay: {
     left: 30,
-    borderColor: colors.danger,
+    borderColor: COLORS.danger,
     transform: [{ rotate: '-20deg' }],
   },
   overlayText: {
     fontSize: 32,
     fontWeight: '800',
-    color: colors.background,
+    color: '#fff',
   },
   cardImageContainer: {
     height: '65%',
     width: '100%',
+    position: 'relative',
   },
   cardImage: {
     width: '100%',
@@ -486,37 +603,79 @@ const styles = StyleSheet.create({
   placeholderEmoji: {
     fontSize: 80,
   },
+  locationBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  locationBadgeText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: COLORS.text,
+  },
+  breedingIndicator: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 15,
+  },
+  breedingIndicatorText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#fff',
+  },
   cardInfo: {
     flex: 1,
     padding: 20,
-    gap: 6,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   cardBreed: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#2F3A4A',
+    color: COLORS.text,
   },
-  cardLocation: {
-    fontSize: 16,
-    color: '#6B7280',
+  reputationBadge: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  cardPrice: {
-    fontSize: 18,
+  reputationText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#000',
-  },
-  cardDate: {
-    fontSize: 14,
-    color: '#6B7280',
+    color: COLORS.text,
   },
   badges: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 8,
+    marginBottom: 12,
+  },
+  healthBadge: {
+    backgroundColor: COLORS.success,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  healthBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#fff',
   },
   pill: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
     backgroundColor: '#F8F9FA',
     borderRadius: 16,
   },
@@ -525,50 +684,118 @@ const styles = StyleSheet.create({
     color: '#555',
     fontWeight: '500',
   },
+  cardPrice: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 4,
+  },
+  cardDate: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
   actions: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 20,
-    paddingBottom: 40,
+    marginBottom: 32,
+    paddingHorizontal: 20,
   },
-  circleButton: {
+  actionButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
   },
-  circleIcon: {
-    fontSize: 28,
+  passButton: {
+    backgroundColor: '#6C7B7F',
   },
-  counter: {
-    position: 'absolute',
-    top: 120,
-    alignSelf: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  superButton: {
+    backgroundColor: COLORS.secondary,
   },
-  counterText: {
-    fontSize: 14,
+  likeButton: {
+    backgroundColor: COLORS.primary,
+  },
+  actionIcon: {
+    fontSize: 24,
+    color: '#fff',
+  },
+  recentMatchesSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#2F3A4A',
+    color: '#fff',
+    marginBottom: 12,
+  },
+  matchesContainer: {
+    gap: 12,
+  },
+  matchItem: {
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  matchAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  matchEmoji: {
+    fontSize: 32,
+  },
+  matchName: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  statsContainer: {
+    marginHorizontal: 20,
+    marginBottom: 32,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
+    padding: 16,
+  },
+  statsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 16,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
   },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    backgroundColor: '#FFF8F0',
+    backgroundColor: COLORS.backgroundGradientStart,
   },
   emptyIcon: {
     fontSize: 64,
@@ -577,43 +804,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2F3A4A',
+    color: '#fff',
     marginBottom: 12,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 32,
-  },
-  emptyActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  filterButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  filterButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  refreshButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: colors.background,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  refreshButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2F3A4A',
   },
 });

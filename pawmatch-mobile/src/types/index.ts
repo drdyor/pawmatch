@@ -148,3 +148,25 @@ export interface StudInterest {
   message?: string;
   createdAt: string;
 }
+
+// Breeding Reimbursement Types
+export type BreedingReimbursement = 'pick_of_litter' | 'half_litter' | 'financial' | 'service_trade';
+
+export interface BreedingTerms {
+  reimbursement: BreedingReimbursement;
+  financialAmount?: number;
+  serviceDetails?: string;
+  healthRequirements: string[];
+  contractRequired: boolean;
+}
+
+// Community Pairing (Arranged Marriage feature)
+export interface CommunityPairing {
+  id: string;
+  malePet: Pet;
+  femalePet: Pet;
+  requestedBy: string; // The user who suggested the pair
+  votes: number;
+  waitlist: string[]; // Array of user IDs on the waitlist
+  createdAt: string;
+}
