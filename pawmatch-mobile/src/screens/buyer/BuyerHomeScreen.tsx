@@ -1,7 +1,7 @@
 import React from 'react';
-import BuyerSwipeDiscoverScreen from './BuyerSwipeDiscoverScreen';
+import AdoptionDiscoveryScreen from './AdoptionDiscoveryScreen';
 
-// BuyerHomeScreen now uses the swipe discover screen with web app design
+// BuyerHomeScreen (Seeker/Adopter) uses Adoption Discovery - Scrollable Cards
 export default function BuyerHomeScreen({ navigation }: any) {
-  return <BuyerSwipeDiscoverScreen navigation={navigation} />;
+  return <AdoptionDiscoveryScreen navigation={navigation} />;
 }
