@@ -30,6 +30,7 @@ export default function MessagesScreen({ navigation }: any) {
   useEffect(() => {
     loadConversations();
     setupRealtimeSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setupRealtimeSubscription = async () => {
