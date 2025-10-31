@@ -1,9 +1,12 @@
 // URL polyfill for React Native (Supabase requires it)
-try {
-  require('react-native-url-polyfill/auto');
-} catch (e) {
-  // Polyfill not available - Supabase may have fallbacks
-  console.warn('URL polyfill not available, Supabase may have limited functionality');
+// Use try/catch for Expo Snack compatibility
+if (typeof require !== 'undefined') {
+  try {
+    require('react-native-url-polyfill/auto');
+  } catch (e) {
+    // Polyfill may not be available in all environments
+    // Supabase has fallbacks for URL handling
+  }
 }
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
