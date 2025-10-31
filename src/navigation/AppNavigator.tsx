@@ -9,6 +9,12 @@ import SignInScreen from '../screens/auth/SignInScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 
+// Onboarding Screens
+import OnboardingWelcomeScreen from '../screens/onboarding/OnboardingWelcomeScreen';
+import BreederOnboardingIntro from '../screens/onboarding/BreederOnboardingIntro';
+import BreederOnboardingIntent from '../screens/onboarding/BreederOnboardingIntent';
+import BreederOnboardingPets from '../screens/onboarding/BreederOnboardingPets';
+
 // Buyer Screens
 import BuyerHomeScreen from '../screens/buyer/BuyerHomeScreen';
 import BuyerFavoritesScreen from '../screens/buyer/BuyerFavoritesScreen';
@@ -119,9 +125,14 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
           // Auth Stack
           <>
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="OnboardingWelcome" component={OnboardingWelcomeScreen} />
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
             <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
+            {/* Onboarding Flow */}
+            <Stack.Screen name="BreederOnboardingIntro" component={BreederOnboardingIntro} />
+            <Stack.Screen name="BreederOnboardingIntent" component={BreederOnboardingIntent} />
+            <Stack.Screen name="BreederOnboardingPets" component={BreederOnboardingPets} />
           </>
         ) : (
           // Main App Stack based on role
