@@ -170,15 +170,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 24,
   },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2F3A4A',
-    marginBottom: 16,
-  },
+  // Removed unused styles: section, sectionTitle
   intentGrid: {
     gap: 12,
   },

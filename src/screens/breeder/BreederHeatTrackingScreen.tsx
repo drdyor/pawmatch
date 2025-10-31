@@ -22,6 +22,7 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
 
   useEffect(() => {
     loadPetAndCycle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPetAndCycle = async () => {

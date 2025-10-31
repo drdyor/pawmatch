@@ -66,14 +66,36 @@ export default function RoleSelectionScreen() {
       
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('users')
         .update({ role: selectedRole })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      // Navigation will be handled by App.tsx auth listener
+      // Get user name for onboarding
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      const userName = userData?.full_name || 'Friend';
+
+      // Route to onboarding for breeders, or let App.tsx handle navigation
+      if (selectedRole === 'breeder_independent' || selectedRole === 'breeder_registered') {
+        // Navigate to breeder onboarding
+        navigation.navigate('BreederOnboardingIntro', {
+          userName,
+        });
+      } else {
+        // Other roles - navigation handled by App.tsx auth listener
+        // Force navigation update
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Welcome' }],
+        });
+      }
     } catch (error: any) {
       Alert.alert('Error', error.message);
       setLoading(false);

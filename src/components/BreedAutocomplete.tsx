@@ -44,6 +44,7 @@ export default function BreedAutocomplete({
     } else {
       setSuggestions([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, species]);
 
   const searchBreeds = async (searchText: string) => {

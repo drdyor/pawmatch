@@ -17,6 +17,7 @@ export default function BuyerHomeScreen({ navigation }: any) {
   useEffect(() => {
     loadUserPreferences();
     loadListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUserPreferences = async () => {
