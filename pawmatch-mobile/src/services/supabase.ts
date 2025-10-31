@@ -1,11 +1,15 @@
 // URL polyfill for React Native (Supabase requires it)
-// Use try/catch for Expo Snack compatibility
-if (typeof require !== 'undefined') {
+// Import with fallback for Expo Snack compatibility
+try {
+  // Try ES6 import first (works in most environments)
+  require('react-native-url-polyfill/auto');
+} catch (e) {
+  // Fallback: try importing from main package
   try {
-    require('react-native-url-polyfill/auto');
-  } catch (e) {
-    // Polyfill may not be available in all environments
-    // Supabase has fallbacks for URL handling
+    require('react-native-url-polyfill');
+  } catch (e2) {
+    // Polyfill not available - Supabase will use native URL if available
+    // This is OK for most Expo environments
   }
 }
 
