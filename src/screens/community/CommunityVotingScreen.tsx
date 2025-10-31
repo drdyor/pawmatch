@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   ToastAndroid,
+  Alert,
 } from 'react-native';
 import { PALETTE } from '../../theme/palette';
 import { SHADOW } from '../../theme/palette';
