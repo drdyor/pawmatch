@@ -126,7 +126,21 @@ export default function BreederHomeScreen({ navigation }: any) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('Matches')}
+          onPress={() => navigation.navigate('New Litters')}
+        >
+          <Text style={styles.actionIcon}>🎉</Text>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>New Litters</Text>
+            <Text style={styles.actionSubtitle}>
+              View upcoming litters and breeding pairs
+            </Text>
+          </View>
+          <Text style={styles.actionArrow}>→</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('Discovery')}
         >
           <Text style={styles.actionIcon}>💛</Text>
           <View style={styles.actionContent}>

@@ -34,15 +34,29 @@ export interface Pet {
   breed: string;
   sex: 'male' | 'female';
   dateOfBirth: string;
+  age_months?: number; // Calculated age for display
   weight?: number;
   size?: 'small' | 'medium' | 'large'; // For dogs
   photos: string[];
   healthRecords: HealthRecord[];
-  status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat';
+  health_badges?: string[]; // e.g., ['vet_checked', 'dna_verified']
+  status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat' | 'at_risk';
   city: string;
-  country: string;
+  country: string; // Current location
+  origin_country?: string; // Original country (important for breeding to avoid inbreeding)
+  listing_type?: 'breeding' | 'adoption' | 'sale' | 'playdate'; // What the pet/listing is for
+  available_for_breeding?: boolean;
   description?: string;
   createdAt: string;
+  // Shelter-specific metadata
+  metadata?: {
+    safeForChildren?: boolean | null; // true = safe, false = not safe, null = unknown
+    temperament?: string[];
+    personality?: string[];
+    urgent?: boolean;
+    urgencyReasons?: string[];
+    euthanasiaDate?: string;
+  };
 }
 
 // Health Record
@@ -146,5 +160,27 @@ export interface StudInterest {
   studOwnerId: string;
   status: 'pending' | 'interested' | 'declined';
   message?: string;
+  createdAt: string;
+}
+
+// Breeding Reimbursement Types
+export type BreedingReimbursement = 'pick_of_litter' | 'half_litter' | 'financial' | 'service_trade';
+
+export interface BreedingTerms {
+  reimbursement: BreedingReimbursement;
+  financialAmount?: number;
+  serviceDetails?: string;
+  healthRequirements: string[];
+  contractRequired: boolean;
+}
+
+// Community Pairing (Arranged Marriage feature)
+export interface CommunityPairing {
+  id: string;
+  malePet: Pet;
+  femalePet: Pet;
+  requestedBy: string; // The user who suggested the pair
+  votes: number;
+  waitlist: string[]; // Array of user IDs on the waitlist
   createdAt: string;
 }

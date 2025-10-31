@@ -15,6 +15,7 @@ import BuyerFavoritesScreen from '../screens/buyer/BuyerFavoritesScreen';
 import BuyerAlertsScreen from '../screens/buyer/BuyerAlertsScreen';
 import BuyerProfileScreen from '../screens/buyer/BuyerProfileScreen';
 import BuyerPreferencesScreen from '../screens/buyer/BuyerPreferencesScreen';
+import AdoptionDiscoveryScreen from '../screens/buyer/AdoptionDiscoveryScreen';
 
 // Breeder Screens
 import BreederHomeScreen from '../screens/breeder/BreederHomeScreen';
@@ -24,12 +25,15 @@ import BreederProfileScreen from '../screens/breeder/BreederProfileScreen';
 import BreederCreateLitterScreen from '../screens/breeder/BreederCreateLitterScreen';
 import BreederHeatTrackingScreen from '../screens/breeder/BreederHeatTrackingScreen';
 import BreederAddPetScreen from '../screens/breeder/BreederAddPetScreen';
+import BreedingDiscoveryScreen from '../screens/breeder/BreedingDiscoveryScreen';
+import NewLittersScreen from '../screens/breeder/NewLittersScreen';
 
 // Shelter Screens
 import ShelterHomeScreen from '../screens/shelter/ShelterHomeScreen';
 import ShelterAnimalsScreen from '../screens/shelter/ShelterAnimalsScreen';
 import ShelterListingsScreen from '../screens/shelter/ShelterListingsScreen';
 import ShelterProfileScreen from '../screens/shelter/ShelterProfileScreen';
+import ShelterAddPetScreen from '../screens/shelter/ShelterAddPetScreen';
 
 // Vet Screens
 import VetHomeScreen from '../screens/vet/VetHomeScreen';
@@ -70,9 +74,12 @@ function BreederTabs() {
         tabBarInactiveTintColor: '#6B7280',
       }}
     >
-      <Tab.Screen name="Home" component={BreederHomeScreen} />
+      <Tab.Screen name="Dashboard" component={BreederHomeScreen} />
       <Tab.Screen name="My Pets" component={BreederPetsScreen} />
+      <Tab.Screen name="New Litters" component={NewLittersScreen} />
+      <Tab.Screen name="Discovery" component={BreedingDiscoveryScreen} />
       <Tab.Screen name="Matches" component={BreederMatchesScreen} />
+      <Tab.Screen name="Messages" component={MessagesScreen} />
       <Tab.Screen name="Profile" component={BreederProfileScreen} />
     </Tab.Navigator>
   );
@@ -130,6 +137,7 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
               <>
                 <Stack.Screen name="BuyerMain" component={BuyerTabs} />
                 <Stack.Screen name="BuyerPreferences" component={BuyerPreferencesScreen} />
+                <Stack.Screen name="AdoptionDiscovery" component={AdoptionDiscoveryScreen} />
               </>
             )}
             {(userRole === 'breeder_registered' || userRole === 'breeder_independent') && (
@@ -138,10 +146,15 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
                 <Stack.Screen name="CreateLitter" component={BreederCreateLitterScreen} />
                 <Stack.Screen name="HeatTracking" component={BreederHeatTrackingScreen} />
                 <Stack.Screen name="AddPet" component={BreederAddPetScreen} />
+                <Stack.Screen name="BreedingDiscovery" component={BreedingDiscoveryScreen} />
+                <Stack.Screen name="NewLitters" component={NewLittersScreen} />
               </>
             )}
             {userRole === 'shelter' && (
-              <Stack.Screen name="ShelterMain" component={ShelterTabs} />
+              <>
+                <Stack.Screen name="ShelterMain" component={ShelterTabs} />
+                <Stack.Screen name="ShelterAddPet" component={ShelterAddPetScreen} />
+              </>
             )}
             {userRole === 'vet' && (
               <Stack.Screen name="VetMain" component={VetTabs} />

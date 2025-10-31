@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
+import BreedMatchSuggestion from '../../components/BreedMatchSuggestion';
+import BreedSelector from '../../components/BreedSelector';
 
 interface PetDraft {
   name: string;
@@ -206,27 +208,28 @@ export default function BreederOnboardingPets({ navigation, route }: any) {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Breed *</Text>
-              <View style={styles.pillGroup}>
-                {breeds.map((breed: string) => (
-                  <TouchableOpacity
-                    key={breed}
-                    style={[
-                      styles.pill,
-                      currentPet.breed === breed && styles.pillSelected,
-                    ]}
-                    onPress={() => setCurrentPet(p => ({ ...p, breed }))}
-                  >
-                    <Text
-                      style={[
-                        styles.pillText,
-                        currentPet.breed === breed && styles.pillTextSelected,
-                      ]}
-                    >
-                      {breed}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <BreedSelector
+                species={breeds.some((b: string) => ['Golden Retriever', 'Labrador', 'German Shepherd', 'Maltese'].includes(b)) ? 'dog' : 'cat'}
+                selectedBreed={currentPet.breed}
+                onSelect={(breed) => setCurrentPet(p => ({ ...p, breed }))}
+                placeholder="Select or search breed"
+              />
+              
+              {/* Breed Matching Suggestion */}
+              {currentPet.breed && (
+                <BreedMatchSuggestion
+                  breed={currentPet.breed}
+                  species={breeds.some((b: string) => ['Golden Retriever', 'Labrador', 'German Shepherd', 'Maltese'].includes(b)) ? 'dog' : 'cat'}
+                  userRole={breederType === 'registered' ? 'breeder_registered' : 'breeder_independent'}
+                  onViewMatch={(match) => {
+                    Alert.alert(
+                      'Potential Match',
+                      `Found ${match.petName} owned by ${match.ownerName} in ${match.city}`,
+                      [{ text: 'View Later', style: 'cancel' }]
+                    );
+                  }}
+                />
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -498,10 +501,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#6B7280',
-  },
-  pillTextSelected: {
-    color: '#000',
-    fontWeight: '600',
   },
   toggleRow: {
     flexDirection: 'row',

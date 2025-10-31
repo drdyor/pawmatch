@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { Header } from '../../components/ui/Header';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
 import { HealthBadges } from '../../components/ui/HealthBadges';
+import BreedSelector from '../../components/BreedSelector';
+import BreedMatchSuggestion from '../../components/BreedMatchSuggestion';
 
 interface Pet {
   name: string;
@@ -115,16 +118,34 @@ export function PetQuickAddScreen({ onNext, onBack }: PetQuickAddScreenProps) {
             </View>
 
             <View style={styles.row}>
-              <View style={styles.halfInput}>
+              <View style={styles.fullInput}>
                 <Text style={styles.label}>Breed</Text>
-                <TextInput
-                  value={draft.breed}
-                  onChangeText={(breed) => setDraft({ ...draft, breed })}
-                  placeholder="Border Collie"
-                  style={styles.input}
-                  placeholderTextColor="#A3A3A3"
+                <BreedSelector
+                  species={draft.species === 'Dog' ? 'dog' : 'cat'}
+                  selectedBreed={draft.breed}
+                  onSelect={(breed) => setDraft({ ...draft, breed })}
+                  placeholder="Select or search breed"
                 />
+                
+                {/* Breed Matching Suggestion */}
+                {draft.breed && (
+                  <BreedMatchSuggestion
+                    breed={draft.breed}
+                    species={draft.species === 'Dog' ? 'dog' : 'cat'}
+                    userRole="independent_owner"
+                    onViewMatch={(match) => {
+                      Alert.alert(
+                        'Potential Match Found!',
+                        `Found ${match.petName} (${match.breed}) owned by ${match.ownerName} in ${match.city}`,
+                        [{ text: 'View Later', style: 'cancel' }]
+                      );
+                    }}
+                  />
+                )}
               </View>
+            </View>
+            
+            <View style={styles.row}>
               <View style={styles.halfInput}>
                 <Text style={styles.label}>Age (years)</Text>
                 <TextInput
@@ -323,6 +344,10 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     flex: 1,
+  },
+  fullInput: {
+    flex: 1,
+    width: '100%',
   },
   label: {
     fontSize: 13,

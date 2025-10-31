@@ -76,7 +76,7 @@ export default function BreederOnboardingIntent({ navigation, route }: any) {
                   selectedIntents.includes(intent.id) && styles.intentLabelSelected,
                 ]}
               >
-                {label}
+                {intent.label}
               </Text>
               {selectedIntents.includes(intent.id) && (
                 <View style={styles.checkmark}>
@@ -169,15 +169,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     lineHeight: 24,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2F3A4A',
-    marginBottom: 16,
   },
   intentGrid: {
     gap: 12,

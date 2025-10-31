@@ -38,3 +38,6 @@ Thumbs.db
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+
+# Seed/script files not needed in Snack
+FIREBASE_SEED_DATA.js

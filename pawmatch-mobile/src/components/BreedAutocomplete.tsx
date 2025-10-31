@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -38,15 +38,7 @@ export default function BreedAutocomplete({
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  useEffect(() => {
-    if (query.length >= 2 && species) {
-      searchBreeds(query);
-    } else {
-      setSuggestions([]);
-    }
-  }, [query, species]);
-
-  const searchBreeds = async (searchText: string) => {
+  const searchBreeds = useCallback(async (searchText: string) => {
     if (!species) return;
     
     setLoading(true);
@@ -67,7 +59,15 @@ export default function BreedAutocomplete({
     } finally {
       setLoading(false);
     }
-  };
+  }, [species]);
+
+  useEffect(() => {
+    if (query.length >= 2 && species) {
+      searchBreeds(query);
+    } else {
+      setSuggestions([]);
+    }
+  }, [query, species, searchBreeds]); // searchBreeds already memoized with useCallback
 
   const handleSelect = (breed: Breed) => {
     setQuery(breed.full_name);
