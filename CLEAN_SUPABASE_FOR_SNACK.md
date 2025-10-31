@@ -1,3 +1,8 @@
+# ✅ Clean Supabase File for Expo Snack
+
+**Copy this ENTIRE file into `src/services/supabase.ts` in Snack:**
+
+```typescript
 // Expo Snack-compatible Supabase client
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
@@ -18,3 +23,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+```
+
+---
+
+## 🔑 **IMPORTANT: Add Your Keys!**
+
+**Replace the empty strings with your actual keys:**
+
+```typescript
+const supabaseUrl = 'https://your-project.supabase.co'; // Your actual URL
+const supabaseAnonKey = 'eyJ...'; // Your actual anon key
+```
+
+**OR use Snack's Secrets tab** to set environment variables.
+
+---
+
+**This version has NO syntax errors - copy it exactly!** ✅
