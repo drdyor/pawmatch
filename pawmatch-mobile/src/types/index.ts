@@ -38,11 +38,20 @@ export interface Pet {
   size?: 'small' | 'medium' | 'large'; // For dogs
   photos: string[];
   healthRecords: HealthRecord[];
-  status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat';
+  status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat' | 'at_risk';
   city: string;
   country: string;
   description?: string;
   createdAt: string;
+  // Shelter-specific metadata
+  metadata?: {
+    safeForChildren?: boolean | null; // true = safe, false = not safe, null = unknown
+    temperament?: string[];
+    personality?: string[];
+    urgent?: boolean;
+    urgencyReasons?: string[];
+    euthanasiaDate?: string;
+  };
 }
 
 // Health Record

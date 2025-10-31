@@ -93,6 +93,15 @@ export default function ShelterAddPetScreen({ navigation }: any) {
       Alert.alert('Missing Info', 'Please fill in name, species, and breed');
       return;
     }
+    
+    if (safeForChildren === null) {
+      Alert.alert(
+        'Important: Child Safety',
+        'Please specify if this animal is safe for small children. This information is critical for adoptive families.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
 
     setLoading(true);
     try {
@@ -135,8 +144,19 @@ export default function ShelterAddPetScreen({ navigation }: any) {
         country: userData?.country || 'Malta',
         status,
         photos,
-        description: `${description}\n\nTemperament: ${selectedTemperament.join(', ')}\nPersonality: ${selectedPersonality.join(', ')}\nSafe with children: ${safeForChildren === true ? 'Yes' : safeForChildren === false ? 'No' : 'Unknown'}\nIntake reason: ${intakeReason}`,
+        description: `${description}\n\nTemperament: ${selectedTemperament.join(', ')}\nPersonality: ${selectedPersonality.join(', ')}\nIntake reason: ${intakeReason}`,
         health_records: [],
+        // Save child safety as metadata for easy filtering
+        metadata: {
+          safeForChildren: safeForChildren, // true, false, or null
+          temperament: selectedTemperament,
+          personality: selectedPersonality,
+          ...(isUrgent ? {
+            urgent: true,
+            urgencyReasons: urgencyReason,
+            euthanasiaDate: euthanasiaDate || null,
+          } : {}),
+        },
       };
 
       // Add urgency metadata
@@ -302,35 +322,53 @@ export default function ShelterAddPetScreen({ navigation }: any) {
         </View>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Safe for Small Children? *</Text>
+      {/* Small Child Friendly - HIGHLIGHTED */}
+      <View style={[styles.inputGroup, styles.importantSection]}>
+        <View style={styles.importantHeader}>
+          <Text style={styles.importantLabel}>🛡️ Safe for Small Children? *</Text>
+          <View style={styles.requiredBadge}>
+            <Text style={styles.requiredText}>REQUIRED</Text>
+          </View>
+        </View>
+        <Text style={styles.importantSubtext}>
+          This is critical information for families considering adoption
+        </Text>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
             style={[
-              styles.toggleButton,
-              safeForChildren === true && styles.toggleButtonActive,
+              styles.toggleButtonLarge,
+              safeForChildren === true && styles.toggleButtonActiveGreen,
             ]}
             onPress={() => setSafeForChildren(true)}
           >
-            <Text style={styles.toggleText}>✅ Yes</Text>
+            <Text style={[styles.toggleText, safeForChildren === true && styles.toggleTextActive]}>
+              ✅ Yes - Safe
+            </Text>
+            <Text style={styles.toggleSubtext}>Tested with children</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
-              styles.toggleButton,
-              safeForChildren === false && styles.toggleButtonActive,
+              styles.toggleButtonLarge,
+              safeForChildren === false && styles.toggleButtonActiveRed,
             ]}
             onPress={() => setSafeForChildren(false)}
           >
-            <Text style={styles.toggleText}>❌ No</Text>
+            <Text style={[styles.toggleText, safeForChildren === false && styles.toggleTextActive]}>
+              ❌ No - Not Safe
+            </Text>
+            <Text style={styles.toggleSubtext}>May not be suitable</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
-              styles.toggleButton,
-              safeForChildren === null && styles.toggleButtonActive,
+              styles.toggleButtonLarge,
+              safeForChildren === null && styles.toggleButtonActiveNeutral,
             ]}
             onPress={() => setSafeForChildren(null)}
           >
-            <Text style={styles.toggleText}>❓ Unknown</Text>
+            <Text style={[styles.toggleText, safeForChildren === null && styles.toggleTextActive]}>
+              ❓ Unknown
+            </Text>
+            <Text style={styles.toggleSubtext}>Not yet tested</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -449,11 +487,26 @@ export default function ShelterAddPetScreen({ navigation }: any) {
         
         {step < 3 ? (
           <TouchableOpacity
-            style={[styles.nextButton, (!name || !species || !breed) && styles.nextButtonDisabled]}
-            onPress={() => setStep(step + 1)}
-            disabled={!name || !species || !breed}
+            style={[
+              styles.nextButton, 
+              (!name || !species || !breed || (step === 2 && safeForChildren === null)) && styles.nextButtonDisabled
+            ]}
+            onPress={() => {
+              if (step === 2 && safeForChildren === null) {
+                Alert.alert(
+                  'Required Information',
+                  'Please specify if this animal is safe for small children before continuing. This is critical for families.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              setStep(step + 1);
+            }}
+            disabled={!name || !species || !breed || (step === 2 && safeForChildren === null)}
           >
-            <Text style={styles.nextButtonText}>Next →</Text>
+            <Text style={styles.nextButtonText}>
+              {step === 2 && safeForChildren === null ? '⚠️ Set Child Safety' : 'Next →'}
+            </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -519,6 +572,44 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 24,
   },
+  importantSection: {
+    backgroundColor: '#F0FDF4',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.success,
+    marginBottom: 24,
+  },
+  importantHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  importantLabel: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    flex: 1,
+  },
+  requiredBadge: {
+    backgroundColor: colors.danger,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  requiredText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.background,
+    letterSpacing: 0.5,
+  },
+  importantSubtext: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
   label: {
     fontSize: 16,
     fontWeight: '600',
@@ -550,14 +641,49 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
+  toggleButtonLarge: {
+    flex: 1,
+    padding: 18,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
   toggleButtonActive: {
     borderColor: colors.success,
     backgroundColor: colors.background,
+  },
+  toggleButtonActiveGreen: {
+    borderColor: colors.success,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 3,
+  },
+  toggleButtonActiveRed: {
+    borderColor: colors.danger,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 3,
+  },
+  toggleButtonActiveNeutral: {
+    borderColor: colors.warning,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 3,
   },
   toggleText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+  },
+  toggleTextActive: {
+    color: colors.text,
+    fontWeight: '700',
+  },
+  toggleSubtext: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
   },
   chipGrid: {
     flexDirection: 'row',
@@ -671,6 +797,9 @@ const styles = StyleSheet.create({
   },
   saveButtonDisabled: {
     opacity: 0.6,
+  },
+  saveButtonWarning: {
+    backgroundColor: colors.warning,
   },
   saveButtonText: {
     fontSize: 16,
