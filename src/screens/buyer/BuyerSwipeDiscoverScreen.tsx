@@ -31,10 +31,13 @@ const FILTER_CHIPS = [
   { id: 'all', label: 'All Pets' },
   { id: 'dogs', label: 'Dogs' },
   { id: 'cats', label: 'Cats' },
-  { id: 'breeders', label: 'Breeders' },
-  { id: 'shelters', label: 'Shelters' },
+  { id: 'breeders', label: 'Breeding' },
+  { id: 'adoption', label: 'Adoption' },
   { id: 'verified', label: 'Verified' },
   { id: 'puppies', label: 'Puppies' },
+  { id: 'pharaoh', label: 'Pharaoh Hounds' },
+  { id: 'maltese', label: 'Maltese Dogs' },
+  { id: 'local', label: 'Local Breeders' },
 ];
 
 export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
@@ -139,6 +142,21 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       case 'verified':
         filtered = filtered.filter(c => c.pet?.verified === true);
         break;
+      case 'pharaoh':
+        filtered = filtered.filter(c => 
+          c.pet?.breed?.toLowerCase().includes('pharaoh')
+        );
+        break;
+      case 'maltese':
+        filtered = filtered.filter(c => 
+          c.pet?.breed?.toLowerCase().includes('maltese')
+        );
+        break;
+      case 'local':
+        filtered = filtered.filter(c => 
+          c.country === 'Malta' || c.city?.includes('Malta')
+        );
+        break;
     }
     
     return filtered;
@@ -204,10 +222,15 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       colors={['#667eea', '#764ba2']}
       style={styles.container}
     >
-      {/* Header */}
+      {/* Malta Header with Flag */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>PawMatch</Text>
-        <Text style={styles.headerSubtitle}>Find your perfect furry companion</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.maltaFlag}>
+            <Text style={styles.flagEmoji}>????</Text>
+          </View>
+          <Text style={styles.headerTitle}>PawMatch Malta</Text>
+        </View>
+        <Text style={styles.headerSubtitle}>Find your perfect furry companion in Malta</Text>
       </View>
 
       {/* Filter Chips */}
@@ -254,12 +277,12 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
                   <View style={styles.badgeRow}>
                     {card.pet.verified && (
                       <View style={styles.healthBadge}>
-                        <Text style={styles.healthBadgeText}>✓ Verified</Text>
+                        <Text style={styles.healthBadgeText}>? Verified</Text>
                       </View>
                     )}
                     {card.type === 'litter_announcement' && (
                       <View style={[styles.healthBadge, styles.healthBadgePending]}>
-                        <Text style={styles.healthBadgeText}>⭐ Litter</Text>
+                        <Text style={styles.healthBadgeText}>? Litter</Text>
                       </View>
                     )}
                   </View>
@@ -268,7 +291,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
                   {card.pet.reputation && (
                     <View style={styles.reputationScore}>
                       <Text style={styles.reputationText}>
-                        🏆 {card.pet.reputation} pts
+                        ?? {card.pet.reputation} pts
                       </Text>
                     </View>
                   )}
@@ -279,7 +302,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
                     </Text>
                   )}
                   {card.price && card.price > 0 && (
-                    <Text style={styles.cardPrice}>€{card.price}</Text>
+                    <Text style={styles.cardPrice}>?{card.price}</Text>
                   )}
                 </View>
               </View>
@@ -374,19 +397,19 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
             style={[styles.actionButton, styles.passButton]}
             onPress={() => swiperRef.current?.swipeLeft()}
           >
-            <Text style={styles.actionButtonText}>✕</Text>
+            <Text style={styles.actionButtonText}>?</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.superButton]}
             onPress={() => swiperRef.current?.swipeTop()}
           >
-            <Text style={styles.actionButtonText}>⭐</Text>
+            <Text style={styles.actionButtonText}>?</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.likeButton]}
             onPress={() => swiperRef.current?.swipeRight()}
           >
-            <Text style={styles.actionButtonText}>♥</Text>
+            <Text style={styles.actionButtonText}>?</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -417,6 +440,27 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
         </View>
       )}
 
+      {/* Malta Pet Statistics */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>Malta Pet Community</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>96K+</Text>
+              <Text style={styles.statLabel}>Registered Dogs</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>85K+</Text>
+              <Text style={styles.statLabel}>Pet Owners</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>50+</Text>
+              <Text style={styles.statLabel}>Vet Clinics</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
       {/* Match Celebration */}
       <MatchCelebration
         visible={matchVisible}
@@ -437,7 +481,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
               style={styles.modalClose}
               onPress={() => setSelectedCard(null)}
             >
-              <Text style={styles.modalCloseText}>✕</Text>
+              <Text style={styles.modalCloseText}>?</Text>
             </TouchableOpacity>
             {selectedCard && selectedCard.pet && (
               <ScrollView>
@@ -515,12 +559,29 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     alignItems: 'center',
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  maltaFlag: {
+    width: 32,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: '#C8102E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  flagEmoji: {
+    fontSize: 16,
+  },
   headerTitle: {
     color: '#fff',
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '800',
     fontFamily: 'System',
-    marginBottom: 4,
   },
   headerSubtitle: {
     color: 'rgba(255,255,255,0.8)',
@@ -702,6 +763,66 @@ const styles = StyleSheet.create({
   recentMatchName: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
+  },
+  statsContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    marginTop: 16,
+  },
+  statsCard: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
+    padding: 16,
+    backdropFilter: 'blur(10px)',
+  },
+  statsTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  statLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+  },
+  locationBadge: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+  },
+  locationBadgeText: {
+    color: '#2C3E50',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  breedingIndicator: {
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 15,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+  },
+  breedingIndicatorText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
