@@ -26,16 +26,10 @@ export default function NewLittersScreen({ navigation }: any) {
     try {
       setLoading(true);
       
-      // Fetch litters from database
-      // Note: This assumes you have a 'litters' table with breeding pair relationships
-      // If not, you'll need to create this table or fetch from a different source
-      
-      // For now, we'll create mock data structure that matches what would come from Supabase
-      // TODO: Replace with actual Supabase query when table exists
-      
+      // Fetch litter announcements from listings
       const { data: listings, error } = await supabase
         .from('listings')
-        .select('*, pet:pet_id(*), owner:owner_id(*)')
+        .select('*, pet:pet_id(*)')
         .eq('type', 'litter_announcement')
         .eq('status', 'live')
         .order('created_at', { ascending: false })
@@ -43,43 +37,86 @@ export default function NewLittersScreen({ navigation }: any) {
 
       if (error) throw error;
 
-      // Transform listings into Litter format
-      // This assumes listings have relationship data for male/female pets
-      // You may need to adjust based on your actual schema
-      
-      const transformedLitters: Litter[] = (listings || []).map((listing: any) => {
-        // TODO: Fetch male and female pets from breeding pair relationship
-        // For now using placeholder/mock data
-        const malePet: Pet = listing.pet || {
-          id: listing.male_pet_id || 'mock-male',
-          name: 'Stud',
-          breed: listing.title.split(' x ')[0] || 'Unknown',
-          sex: 'male',
-          photos: [],
-        };
-        
-        const femalePet: Pet = listing.pet || {
-          id: listing.female_pet_id || 'mock-female',
-          name: 'Dam',
-          breed: listing.title.split(' x ')[1] || 'Unknown',
-          sex: 'female',
-          photos: [],
-        };
+      // Fetch breeding pair pets for each listing
+      const transformedLitters: Litter[] = await Promise.all(
+        (listings || []).map(async (listing: any) => {
+          // Try to fetch male and female pets from metadata or related tables
+          let malePet: Pet | null = null;
+          let femalePet: Pet | null = null;
+
+          // Check if listing has metadata with pet IDs
+          if (listing.metadata?.male_pet_id && listing.metadata?.female_pet_id) {
+            const { data: pets } = await supabase
+              .from('pets')
+              .select('*')
+              .in('id', [listing.metadata.male_pet_id, listing.metadata.female_pet_id]);
+
+            if (pets) {
+              malePet = pets.find(p => p.id === listing.metadata.male_pet_id && p.sex === 'male') || null;
+              femalePet = pets.find(p => p.id === listing.metadata.female_pet_id && p.sex === 'female') || null;
+            }
+          }
+
+          // Fallback: Parse from title if metadata not available
+          if (!malePet || !femalePet) {
+            const titleParts = listing.title?.split(' x ') || [];
+            const maleBreed = titleParts[0]?.trim() || 'Unknown';
+            const femaleBreed = titleParts[1]?.trim() || 'Unknown';
+
+            if (!malePet) {
+              malePet = {
+                id: listing.metadata?.male_pet_id || `temp-male-${listing.id}`,
+                ownerId: listing.owner_id,
+                ownerRole: listing.owner_role || 'breeder_registered',
+                name: 'Stud',
+                species: listing.pet?.species || 'dog',
+                breed: maleBreed,
+                sex: 'male',
+                dateOfBirth: new Date().toISOString(),
+                photos: listing.pet?.photos || [],
+                healthRecords: [],
+                status: 'stud_available',
+                city: listing.city || '',
+                country: listing.country || '',
+                createdAt: listing.created_at,
+              } as Pet;
+            }
+
+            if (!femalePet) {
+              femalePet = {
+                id: listing.metadata?.female_pet_id || `temp-female-${listing.id}`,
+                ownerId: listing.owner_id,
+                ownerRole: listing.owner_role || 'breeder_registered',
+                name: 'Dam',
+                species: listing.pet?.species || 'dog',
+                breed: femaleBreed,
+                sex: 'female',
+                dateOfBirth: new Date().toISOString(),
+                photos: listing.pet?.photos || [],
+                healthRecords: [],
+                status: 'in_heat',
+                city: listing.city || '',
+                country: listing.country || '',
+                createdAt: listing.created_at,
+              } as Pet;
+            }
+          }
 
         return {
           id: listing.id,
           title: listing.title,
           expectedDate: listing.availableDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-          malePet,
-          femalePet,
+          malePet: malePet!,
+          femalePet: femalePet!,
           expectedCount: listing.pupsAvailable,
-          breed: `${malePet.breed} × ${femalePet.breed}`,
+          breed: `${malePet!.breed} × ${femalePet!.breed}`,
           status: listing.status === 'live' ? 'expecting' : 'breeding',
           photos: listing.photos || [],
           description: listing.description,
           createdAt: listing.created_at,
         };
-      });
+      })
+    );
 
       setLitters(transformedLitters);
     } catch (error: any) {
