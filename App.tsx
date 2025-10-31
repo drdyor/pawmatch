@@ -1,4 +1,7 @@
 // App.tsx - WITH AUTH BYPASS for Testing
+// Polyfills must be imported first
+import 'react-native-get-random-values';
+
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';

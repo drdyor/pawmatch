@@ -32,6 +32,8 @@
     "react-native-screens": "~3.29.0",
     "react-native-svg": "^14.1.0",
     "react-native-url-polyfill": "^2.0.0",
+    "react-native-get-random-values": "^1.11.0",
+    "base-64": "^1.0.0",
     "lottie-react-native": "^6.7.0",
     "victory-native": "^36.9.2"
   },
