@@ -70,9 +70,14 @@ export default function BreedSelector({
 
   useEffect(() => {
     if (searchQuery.trim()) {
-      const filtered = allBreeds.filter((breed) =>
-        breed.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      // Fuzzy search - handles spelling variations
+      const query = searchQuery.toLowerCase().trim();
+      const filtered = allBreeds.filter((breed) => {
+        const fullName = breed.full_name.toLowerCase();
+        const baseName = breed.base_name?.toLowerCase() || '';
+        // Match if query is contained in full name or base name
+        return fullName.includes(query) || baseName.includes(query);
+      });
       setFilteredBreeds(filtered);
     } else {
       setFilteredBreeds(allBreeds);

@@ -30,6 +30,7 @@ import ShelterHomeScreen from '../screens/shelter/ShelterHomeScreen';
 import ShelterAnimalsScreen from '../screens/shelter/ShelterAnimalsScreen';
 import ShelterListingsScreen from '../screens/shelter/ShelterListingsScreen';
 import ShelterProfileScreen from '../screens/shelter/ShelterProfileScreen';
+import ShelterAddPetScreen from '../screens/shelter/ShelterAddPetScreen';
 
 // Vet Screens
 import VetHomeScreen from '../screens/vet/VetHomeScreen';
@@ -141,7 +142,10 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
               </>
             )}
             {userRole === 'shelter' && (
-              <Stack.Screen name="ShelterMain" component={ShelterTabs} />
+              <>
+                <Stack.Screen name="ShelterMain" component={ShelterTabs} />
+                <Stack.Screen name="ShelterAddPet" component={ShelterAddPetScreen} />
+              </>
             )}
             {userRole === 'vet' && (
               <Stack.Screen name="VetMain" component={VetTabs} />

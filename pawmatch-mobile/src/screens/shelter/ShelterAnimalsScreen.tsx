@@ -72,7 +72,7 @@ export default function ShelterAnimalsScreen({ navigation }: any) {
         </View>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => setShowIntakeModal(true)}
+          onPress={() => navigation.navigate('ShelterAddPet')}
         >
           <Text style={styles.addButtonText}>+ Intake</Text>
         </TouchableOpacity>
