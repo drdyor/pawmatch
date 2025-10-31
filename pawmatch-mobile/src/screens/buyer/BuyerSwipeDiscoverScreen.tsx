@@ -172,7 +172,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       });
     }
 
-    Alert.alert('❤️ It\'s a Match!', `You and ${card.pet.name || card.pet.breed} are perfect together!`);
+    Alert.alert('❤️ It\'s a Match!', `You and ${card.pet?.name || card.pet?.breed || 'this pet'} are perfect together!`);
   };
 
   const handlePass = () => {

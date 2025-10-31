@@ -149,9 +149,4 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-});
+// Styles removed - not used

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -41,24 +41,7 @@ export default function BreedSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (species) {
-      loadBreeds();
-    }
-  }, [species]);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = allBreeds.filter((breed) =>
-        breed.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredBreeds(filtered);
-    } else {
-      setFilteredBreeds(allBreeds);
-    }
-  }, [searchQuery, allBreeds]);
-
-  const loadBreeds = async () => {
+  const loadBreeds = useCallback(async () => {
     if (!species) return;
 
     setLoading(true);
@@ -77,7 +60,24 @@ export default function BreedSelector({
     } finally {
       setLoading(false);
     }
-  };
+  }, [species]);
+
+  useEffect(() => {
+    if (species) {
+      loadBreeds();
+    }
+  }, [species, loadBreeds]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = allBreeds.filter((breed) =>
+        breed.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredBreeds(filtered);
+    } else {
+      setFilteredBreeds(allBreeds);
+    }
+  }, [searchQuery, allBreeds]);
 
   const handleSelect = (breed: Breed) => {
     onSelect(breed.full_name);
