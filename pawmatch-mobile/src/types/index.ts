@@ -24,25 +24,37 @@ export interface User {
   createdAt: string;
 }
 
-// Pet
+// Pet (matches Paws database schema - snake_case)
 export interface Pet {
   id: string;
-  ownerId: string;
-  ownerRole: UserRole;
+  owner_user_id: string; // DB uses snake_case
+  owner_role: UserRole;
   name: string;
   species: 'dog' | 'cat' | 'other';
   breed: string;
+  breed_id?: string;
   sex: 'male' | 'female';
-  dateOfBirth: string;
+  date_of_birth: string; // DB uses snake_case
   weight?: number;
-  size?: 'small' | 'medium' | 'large'; // For dogs
+  size?: 'small' | 'medium' | 'large';
   photos: string[];
-  healthRecords: HealthRecord[];
-  status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat';
+  status: 'available' | 'reserved' | 'adopted' | 'stud_available' | 'in_heat' | 'at_risk';
   city: string;
   country: string;
   description?: string;
-  createdAt: string;
+  adopted_at?: string; // DB uses snake_case
+  geo?: any; // PostGIS geography type
+  at_risk_until?: string;
+  litter_id?: string;
+  created_at: string; // DB uses snake_case
+  updated_at?: string;
+  
+  // Aliases for backwards compatibility
+  ownerId?: string; // @deprecated - use owner_user_id
+  ownerRole?: UserRole; // @deprecated - use owner_role
+  dateOfBirth?: string; // @deprecated - use date_of_birth
+  createdAt?: string; // @deprecated - use created_at
+  healthRecords?: HealthRecord[]; // Joined data
 }
 
 // Health Record
@@ -57,17 +69,27 @@ export interface HealthRecord {
   fileUrl?: string;
 }
 
-// Heat Cycle
+// Heat Cycle (matches Paws database schema - snake_case)
 export interface HeatCycle {
   id: string;
-  petId: string;
-  startDate: string;
-  cycleDay: number;
-  cycleLength: number; // typical 21 days
-  fertileWindowStart?: string;
-  fertileWindowEnd?: string;
+  pet_id: string; // DB uses snake_case
+  heat_start_date: string; // DB uses snake_case
+  estimated_ovulation?: string;
+  fertile_window_start?: string; // DB uses snake_case
+  fertile_window_end?: string; // DB uses snake_case
+  next_heat_estimate?: string;
   notes?: string;
-  notificationsSent?: boolean; // Track if stud notifications sent
+  created_at?: string;
+  updated_at?: string;
+  
+  // Aliases for backwards compatibility
+  petId?: string; // @deprecated
+  startDate?: string; // @deprecated
+  cycleDay?: number; // @deprecated
+  cycleLength?: number; // @deprecated
+  fertileWindowStart?: string; // @deprecated
+  fertileWindowEnd?: string; // @deprecated
+  notificationsSent?: boolean; // @deprecated
 }
 
 // Listing

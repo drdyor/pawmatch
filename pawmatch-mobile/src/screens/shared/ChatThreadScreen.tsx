@@ -75,7 +75,10 @@ export default function ChatThreadScreen({ navigation, route }: any) {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        Alert.alert('Error', 'Could not load messages');
+        throw error;
+      }
 
       setMessages(data || []);
 

@@ -168,7 +168,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       });
     }
 
-    Alert.alert('❤️ Saved!', 'You'll get updates about this litter.');
+    Alert.alert('Saved!', "You'll get updates about this litter.");
   };
 
   const handlePass = () => {
