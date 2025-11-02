@@ -26,3 +26,13 @@ dist-ssr
 /documents
 documents
 .env
+
+# EAS Build
+.eas-build-pre-install.sh
+eas-build-pre-install.sh
+*.apk
+*.aab
+*.ipa
+build/
+.expo/
+.expo-shared/
