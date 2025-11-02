@@ -2,6 +2,8 @@
   "expo": {
     "name": "PawMatch",
     "slug": "pawmatch-mobile",
+    "scheme": "pawmatch",
+    "owner": "drdyor",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -33,6 +35,11 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": []
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
   }
 }

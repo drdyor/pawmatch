@@ -6,7 +6,18 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "dev:client:ios": "eas build -p ios --profile development",
+    "dev:client:android": "eas build -p android --profile development",
+    "build:ios:preview": "eas build -p ios --profile preview",
+    "build:android:preview": "eas build -p android --profile preview",
+    "build:ios": "eas build -p ios --profile production",
+    "build:android": "eas build -p android --profile production",
+    "submit:ios": "eas submit -p ios --latest",
+    "submit:android": "eas submit -p android --latest"
+  },
+  "engines": {
+    "node": ">=18.17.0 <=20.x"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^6.5.11",
