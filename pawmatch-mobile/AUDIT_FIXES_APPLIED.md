@@ -14,7 +14,7 @@ Updated `src/screens/breeder/BreederHeatTrackingScreen.tsx` to:
 - Use adapters when writing to database (`toSnake` for writes)
 - Handle both camelCase and snake_case properties for backward compatibility
 
-### 3. **Environment Configuration** ✓ (Previously done)
+### 3. **Environment Configuration** ✓
 - `.env` file created with your Supabase credentials
 - `app.json` updated with required plugins and permissions
 - Supabase client configured to read from environment variables
@@ -59,36 +59,7 @@ await supabase.from('heat_cycles').insert(dbData);
    - Swipe through pet cards
    - Verify data loads from Supabase
 
-### Database Verification
-Connect to your Supabase dashboard and verify:
-- Tables exist: `pets`, `heat_cycles`, `listings`, `users`
-- RLS policies are active
-- Data can be inserted/read
-
-## Remaining TypeScript Errors
-
-These are **non-blocking** and won't prevent the app from running:
-- Missing `@react-navigation/stack` (navigation dependency)
-- Style property mismatches (cosmetic)
-- Missing imports in some screens (can be fixed incrementally)
-
-## Next Steps (Optional Improvements)
-
-1. **Generate Database Types:**
-   ```bash
-   npx supabase gen types typescript --project-id bdpbjsciaekgcdpvqomr > src/types/database.types.ts
-   ```
-   Then update `supabase.ts` to use typed client.
-
-2. **Add Adapters to More Screens:**
-   - Update `BuyerSwipeDiscoverScreen.tsx` if needed
-   - Update any other screens accessing `listings` or `pets` tables
-
-3. **Discovery Screen Enhancement:**
-   - Optionally upgrade to `react-native-deck-swiper` for better UX
-   - Current implementation works but could be smoother
-
-## Deployment Ready?
+## Deployment Ready
 
 **Yes!** The critical fixes are in place. You can:
 - ✅ Test locally with `npx expo start`
