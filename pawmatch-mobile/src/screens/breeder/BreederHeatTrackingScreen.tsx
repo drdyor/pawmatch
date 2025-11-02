@@ -13,6 +13,7 @@ import { supabase } from '../../services/supabase';
 import { Pet, HeatCycle } from '../../types';
 import HeatCalendar from '../../components/HeatCalendar';
 import HeatRing from '../../components/HeatRing';
+import { toCamel, toSnake } from '../../lib/case';
 
 export default function BreederHeatTrackingScreen({ navigation, route }: any) {
   const { petId } = route.params;
@@ -34,7 +35,8 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
         .single();
 
       if (petError) throw petError;
-      setPet(petData);
+      // Convert snake_case DB data to camelCase for UI
+      setPet(toCamel(petData) as Pet);
 
       // Load current heat cycle
       const { data: cycleData, error: cycleError } = await supabase
@@ -46,15 +48,16 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
         .single();
 
       if (cycleData) {
-        // Calculate current cycle day
-        const startDate = new Date(cycleData.start_date);
+        // Convert snake_case to camelCase, then add computed fields
+        const camelCycle = toCamel(cycleData) as any;
+        const startDate = new Date(camelCycle.startDate || cycleData.start_date);
         const today = new Date();
         const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
         
         setCurrentCycle({
-          ...cycleData,
+          ...camelCycle,
           cycleDay: daysDiff + 1,
-        });
+        } as HeatCycle);
       }
     } catch (error) {
       console.error('Error loading pet and cycle:', error);
@@ -72,17 +75,20 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
       const fertileEnd = new Date(start);
       fertileEnd.setDate(start.getDate() + 13); // Day 14
 
+      // Convert camelCase UI data to snake_case for DB
+      const dbPayload = toSnake({
+        petId: petId,
+        startDate: startDate,
+        cycleDay: 1,
+        cycleLength: 21,
+        fertileWindowStart: fertileStart.toISOString().split('T')[0],
+        fertileWindowEnd: fertileEnd.toISOString().split('T')[0],
+        notificationsSent: false,
+      });
+
       const { data, error } = await supabase
         .from('heat_cycles')
-        .insert({
-          pet_id: petId,
-          start_date: startDate,
-          cycle_day: 1,
-          cycle_length: 21,
-          fertile_window_start: fertileStart.toISOString().split('T')[0],
-          fertile_window_end: fertileEnd.toISOString().split('T')[0],
-          notifications_sent: false,
-        })
+        .insert(dbPayload)
         .select()
         .single();
 
@@ -114,6 +120,8 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
           onPress: async () => {
             try {
               // Find available studs of same breed
+              // Note: pet is already in camelCase, but DB columns are snake_case
+              const petOwnerId = (pet as any).ownerId || (pet as any).owner_id;
               const { data: studs, error } = await supabase
                 .from('pets')
                 .select('*, owner:users(*)')
@@ -121,24 +129,28 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
                 .eq('breed', pet?.breed)
                 .eq('sex', 'male')
                 .eq('status', 'stud_available')
-                .neq('owner_id', pet?.owner_id);
+                .neq('owner_id', petOwnerId);
 
               if (error) throw error;
 
               // Create notifications for stud owners
-              const notifications = studs?.map(stud => ({
-                user_id: stud.owner_id,
-                type: 'heat_notification',
-                title: '🔥 Female in Heat Nearby',
-                body: `${pet?.name} (${pet?.breed}) is in heat in ${pet?.city}. Day ${currentCycle.cycleDay} of cycle.`,
-                data: { pet_id: petId, heat_cycle_id: currentCycle.id },
-                read: false,
-              }));
+              // studs come from DB in snake_case, convert as needed
+              const notifications = studs?.map(stud => {
+                const camelStud = toCamel(stud);
+                return {
+                  user_id: camelStud.ownerId || stud.owner_id,
+                  type: 'heat_notification',
+                  title: '🔥 Female in Heat Nearby',
+                  body: `${pet?.name} (${pet?.breed}) is in heat in ${pet?.city}. Day ${currentCycle.cycleDay} of cycle.`,
+                  data: { pet_id: petId, heat_cycle_id: currentCycle.id },
+                  read: false,
+                };
+              });
 
               if (notifications && notifications.length > 0) {
                 await supabase.from('notifications').insert(notifications);
 
-                // Mark notifications as sent
+                // Mark notifications as sent (DB uses snake_case)
                 await supabase
                   .from('heat_cycles')
                   .update({ notifications_sent: true })
@@ -185,7 +197,7 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
               <InfoCard
                 icon="📅"
                 label="Started"
-                value={new Date(currentCycle.start_date).toLocaleDateString()}
+                value={new Date((currentCycle as any).startDate || (currentCycle as any).start_date).toLocaleDateString()}
               />
               <InfoCard
                 icon="🎯"
@@ -198,7 +210,7 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Breeding Reminders</Text>
             <View style={styles.reminderCard}>
-              {currentCycle.cycleDay < 8 && (
+                {currentCycle.cycleDay < 8 && (
                 <Text style={styles.reminderText}>
                   💡 {8 - currentCycle.cycleDay} days until fertile window
                 </Text>
@@ -215,14 +227,14 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
               )}
               
               <View style={styles.reminderActions}>
-                {!currentCycle.notifications_sent && currentCycle.cycleDay >= 1 && (
+                {!((currentCycle as any).notificationsSent || (currentCycle as any).notifications_sent) && currentCycle.cycleDay >= 1 && (
                   <TouchableOpacity style={styles.notifyButton} onPress={sendStudNotifications}>
                     <Text style={styles.notifyButtonText}>
                       🔔 Notify Stud Owners
                     </Text>
                   </TouchableOpacity>
                 )}
-                {currentCycle.notifications_sent && (
+                {((currentCycle as any).notificationsSent || (currentCycle as any).notifications_sent) && (
                   <Text style={styles.notifiedText}>✅ Stud owners notified</Text>
                 )}
               </View>
@@ -232,8 +244,8 @@ export default function BreederHeatTrackingScreen({ navigation, route }: any) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Cycle Calendar</Text>
             <HeatCalendar
-              startDate={currentCycle.start_date}
-              cycleLength={currentCycle.cycleLength}
+              startDate={(currentCycle as any).startDate || (currentCycle as any).start_date}
+              cycleLength={currentCycle.cycleLength || 21}
             />
           </View>
         </>
