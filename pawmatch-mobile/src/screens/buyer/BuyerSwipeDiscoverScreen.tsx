@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Animated,
-  PanResponder,
   Dimensions,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
 import { Listing, Pet } from '../../types';
+import { DiscoverySwiper, type LitterCard } from '../../components/DiscoverySwiper';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
-
-type LitterCard = Listing & { pet: Pet };
 
 export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   const [cards, setCards] = useState<LitterCard[]>([]);
@@ -26,24 +23,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  const position = useRef(new Animated.ValueXY()).current;
-  const rotation = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-15deg', '0deg', '15deg'],
-    extrapolate: 'clamp',
-  });
-
-  const likeOpacity = position.x.interpolate({
-    inputRange: [0, SCREEN_WIDTH / 4],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const nopeOpacity = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 4, 0],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  // Swiping handled by rn-swiper-list via DiscoverySwiper
 
   useEffect(() => {
     loadCards();
@@ -113,44 +93,10 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     }
   };
 
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderMove: (_, gesture) => {
-      position.setValue({ x: gesture.dx, y: gesture.dy });
-    },
-    onPanResponderRelease: (_, gesture) => {
-      if (gesture.dx > SWIPE_THRESHOLD) {
-        forceSwipe('right');
-      } else if (gesture.dx < -SWIPE_THRESHOLD) {
-        forceSwipe('left');
-      } else {
-        resetPosition();
-      }
-    },
-  });
-
   const forceSwipe = (direction: 'left' | 'right') => {
-    const x = direction === 'right' ? SCREEN_WIDTH + 100 : -SCREEN_WIDTH - 100;
-    Animated.timing(position, {
-      toValue: { x, y: 0 },
-      duration: 250,
-      useNativeDriver: false,
-    }).start(() => {
-      if (direction === 'right') {
-        handleLike();
-      } else {
-        handlePass();
-      }
-      position.setValue({ x: 0, y: 0 });
-      setCurrentIndex(prev => prev + 1);
-    });
-  };
-
-  const resetPosition = () => {
-    Animated.spring(position, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: false,
-    }).start();
+    // no-op: retained for bottom controls; DiscoverySwiper calls handlers directly
+    if (direction === 'right') handleLike(); else handlePass();
+    setCurrentIndex(prev => prev + 1);
   };
 
   const handleLike = async () => {
@@ -224,7 +170,6 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   }
 
   const currentCard = cards[currentIndex];
-  const nextCard = cards[currentIndex + 1];
 
   return (
     <View style={styles.container}>
@@ -236,87 +181,14 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
         <Text style={styles.filterBarText}>🔎 Breeds · € · Preferences</Text>
       </TouchableOpacity>
 
-      {/* Card Stack */}
+      {/* Card Stack via rn-swiper-list */}
       <View style={styles.cardContainer}>
-        {/* Next card preview */}
-        {nextCard && (
-          <View style={[styles.cardPreview, { opacity: 0.5, transform: [{ scale: 0.95 }] }]}>
-            <View style={styles.cardImageContainer}>
-              {nextCard.pet.photos?.[0] ? (
-                <Image
-                  source={{ uri: nextCard.pet.photos[0] }}
-                  style={styles.cardImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.placeholderImage}>
-                  <Text style={styles.placeholderEmoji}>🐾</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Current card */}
-        <Animated.View
-          style={[
-            styles.card,
-            {
-              transform: [{ translateX: position.x }, { translateY: position.y }, { rotate: rotation }],
-            },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {/* SAVE overlay */}
-          <Animated.View style={[styles.overlay, styles.saveOverlay, { opacity: likeOpacity }]}>
-            <Text style={styles.overlayText}>SAVE</Text>
-          </Animated.View>
-
-          {/* PASS overlay */}
-          <Animated.View style={[styles.overlay, styles.passOverlay, { opacity: nopeOpacity }]}>
-            <Text style={styles.overlayText}>PASS</Text>
-          </Animated.View>
-
-          {/* Card Image */}
-          <View style={styles.cardImageContainer}>
-            {currentCard.pet.photos?.[0] ? (
-              <Image
-                source={{ uri: currentCard.pet.photos[0] }}
-                style={styles.cardImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderEmoji}>
-                  {currentCard.pet.species === 'dog' ? '🐕' : '🐈'}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Card Info */}
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardBreed}>{currentCard.pet.breed}</Text>
-            <Text style={styles.cardLocation}>
-              {currentCard.city}, {currentCard.country}
-            </Text>
-            <Text style={styles.cardPrice}>
-              €{(currentCard.price / 100).toFixed(0)}
-              {currentCard.pupsAvailable && ` · ${currentCard.pupsAvailable} available`}
-            </Text>
-            {currentCard.availableDate && (
-              <Text style={styles.cardDate}>
-                Ready: {new Date(currentCard.availableDate).toLocaleDateString()}
-              </Text>
-            )}
-            <View style={styles.badges}>
-              {currentCard.deposit && (
-                <Pill text={`Deposit €${(currentCard.deposit / 100).toFixed(0)}`} />
-              )}
-              <Pill text="Health checked" />
-            </View>
-          </View>
-        </Animated.View>
+        <DiscoverySwiper
+          cards={cards}
+          onLike={(c) => { handleLike(); setCurrentIndex(i => Math.min(i + 1, cards.length)); }}
+          onPass={() => { handlePass(); setCurrentIndex(i => Math.min(i + 1, cards.length)); }}
+          onDetail={(c) => navigation.navigate('PetDetail', { petId: c.pet.id, listingId: c.id })}
+        />
       </View>
 
       {/* Bottom Actions */}

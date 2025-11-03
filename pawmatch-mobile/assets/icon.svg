@@ -1,0 +1,43 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PawMatch icon - two paws touching">
+  <rect width="1024" height="1024" fill="#FFC700"/>
+
+  <!-- Left paw -->
+  <g transform="translate(360,560) rotate(-15)">
+    <!-- shadow -->
+    <g opacity="0.15" transform="translate(6,8)">
+      <ellipse cx="0" cy="40" rx="110" ry="82" fill="#000"/>
+      <circle cx="-85" cy="-20" r="32" fill="#000"/>
+      <circle cx="-30" cy="-45" r="28" fill="#000"/>
+      <circle cx="30" cy="-45" r="28" fill="#000"/>
+      <circle cx="85" cy="-20" r="32" fill="#000"/>
+    </g>
+    <!-- main pad (wider, recognizable) -->
+    <ellipse cx="0" cy="40" rx="110" ry="82" fill="#FFFFFF"/>
+    <!-- toe pads in an arc -->
+    <circle cx="-85" cy="-20" r="32" fill="#FFFFFF"/>
+    <circle cx="-30" cy="-45" r="28" fill="#FFFFFF"/>
+    <circle cx="30" cy="-45" r="28" fill="#FFFFFF"/>
+    <circle cx="85" cy="-20" r="32" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Right paw (mirrored) -->
+  <g transform="translate(664,560) rotate(15)">
+    <!-- shadow -->
+    <g opacity="0.15" transform="translate(6,8)">
+      <ellipse cx="0" cy="40" rx="110" ry="82" fill="#000"/>
+      <circle cx="-85" cy="-20" r="32" fill="#000"/>
+      <circle cx="-30" cy="-45" r="28" fill="#000"/>
+      <circle cx="30" cy="-45" r="28" fill="#000"/>
+      <circle cx="85" cy="-20" r="32" fill="#000"/>
+    </g>
+    <ellipse cx="0" cy="40" rx="110" ry="82" fill="#FFFFFF"/>
+    <circle cx="-85" cy="-20" r="32" fill="#FFFFFF"/>
+    <circle cx="-30" cy="-45" r="28" fill="#FFFFFF"/>
+    <circle cx="30" cy="-45" r="28" fill="#FFFFFF"/>
+    <circle cx="85" cy="-20" r="32" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Subtle focal spark where paws nearly touch -->
+  <circle cx="512" cy="512" r="7" fill="#FFFFFF"/>
+  <circle cx="512" cy="512" r="20" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="4"/>
+</svg>

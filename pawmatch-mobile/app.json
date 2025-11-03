@@ -1,7 +1,9 @@
 {
   "expo": {
     "name": "PawMatch",
-    "slug": "pawmatch-mobile",
+    "slug": "pawmatch",
+    "scheme": "pawmatch",
+    "owner": "drdyor",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,19 +13,22 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFC700"
     },
+    "updates": {
+      "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pawmatch.app"
+      "bundleIdentifier": "com.drdyor.pawmatch"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFC700"
       },
-      "package": "com.pawmatch.app",
+      "package": "com.drdyor.pawmatch",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
