@@ -20,38 +20,56 @@ export function DiscoverySwiper({ cards, onLike, onPass, onDetail }: DiscoverySw
 
   const calculateAge = (dateOfBirth: string): number => {
     if (!dateOfBirth) return 0;
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    const months = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    return Math.floor(months / 12); // return age in years
+    try {
+      const today = new Date();
+      const birthDate = new Date(dateOfBirth);
+      const months = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      return Math.floor(months / 12); // return age in years
+    } catch (error) {
+      console.error('Error calculating age:', error);
+      return 0;
+    }
   };
 
-  const renderCard = (item: LitterCard) => (
-    <View style={styles.cardStyle}>
-      <View style={styles.cardImageContainer}>
-        {item.pet.photos?.[0] ? (
-          <Image source={{ uri: item.pet.photos[0] }} style={styles.cardImage} resizeMode="cover" />
-        ) : (
+  const renderCard = (item: LitterCard) => {
+    if (!item || !item.pet) {
+      return (
+        <View style={styles.cardStyle}>
           <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderEmoji}>{item.pet.species === 'dog' ? '🐕' : '🐈'}</Text>
-          </View>
-        )}
-        {/* Pet Info Overlay at Bottom-Left */}
-        <View style={styles.infoOverlay}>
-          <View style={styles.infoGradient}>
-            <Text style={styles.petName}>{item.pet.name || 'Unknown'}, {calculateAge(item.pet.date_of_birth)}</Text>
-            <Text style={styles.petBreed}>{item.pet.breed}, {item.pet.sex === 'male' ? 'Male' : 'Female'}</Text>
+            <Text style={styles.placeholderEmoji}>🐾</Text>
+            <Text style={styles.emptyText}>Invalid card data</Text>
           </View>
         </View>
-        {/* Play Button Overlay (if video available) */}
-        {item.pet.photos && item.pet.photos.length > 1 && (
-          <View style={styles.playButtonOverlay}>
-            <Text style={styles.playButton}>▶</Text>
+      );
+    }
+
+    return (
+      <View style={styles.cardStyle}>
+        <View style={styles.cardImageContainer}>
+          {item.pet.photos?.[0] ? (
+            <Image source={{ uri: item.pet.photos[0] }} style={styles.cardImage} resizeMode="cover" />
+          ) : (
+            <View style={styles.placeholderImage}>
+              <Text style={styles.placeholderEmoji}>{item.pet.species === 'dog' ? '🐕' : '🐈'}</Text>
+            </View>
+          )}
+          {/* Pet Info Overlay at Bottom-Left */}
+          <View style={styles.infoOverlay}>
+            <View style={styles.infoGradient}>
+              <Text style={styles.petName}>{item.pet.name || 'Unknown'}, {calculateAge(item.pet.date_of_birth)}</Text>
+              <Text style={styles.petBreed}>{item.pet.breed || 'Unknown'}, {item.pet.sex === 'male' ? 'Male' : 'Female'}</Text>
+            </View>
           </View>
-        )}
+          {/* Play Button Overlay (if video available) */}
+          {item.pet.photos && item.pet.photos.length > 1 && (
+            <View style={styles.playButtonOverlay}>
+              <Text style={styles.playButton}>▶</Text>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const OverlayLabelRight = () => (
     <View style={[styles.overlay, styles.saveOverlay]}>

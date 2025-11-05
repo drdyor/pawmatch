@@ -26,9 +26,15 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
   // Swiping handled by rn-swiper-list via DiscoverySwiper
 
   useEffect(() => {
+    console.log('BuyerSwipeDiscoverScreen mounted');
     loadCards();
     setupRealtimeSubscription();
   }, []);
+
+  useEffect(() => {
+    console.log('Cards updated:', cards.length, 'cards');
+    console.log('Loading:', loading);
+  }, [cards, loading]);
 
   const setupRealtimeSubscription = () => {
     // Subscribe to new listings
@@ -55,17 +61,22 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
 
   const loadCards = async () => {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       
       // Get user preferences
       let userPrefs: any = null;
       if (user) {
-        const { data } = await supabase
-          .from('users')
-          .select('preferred_species, preferred_dog_size, preferred_age, preferred_energy_level, preferred_activities, preferred_breeds, preferred_gender')
-          .eq('id', user.id)
-          .single();
-        userPrefs = data;
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('preferred_species, preferred_dog_size, preferred_age, preferred_energy_level, preferred_activities, preferred_breeds, preferred_gender')
+            .eq('id', user.id)
+            .single();
+          userPrefs = data;
+        } catch (prefError) {
+          console.log('No user preferences found, using defaults');
+        }
       }
 
       // Fetch live listings
@@ -77,7 +88,12 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching listings:', error);
+        // Set empty array on error, don't crash
+        setCards([]);
+        return;
+      }
 
       // Filter by preferences
       let filtered = data || [];
@@ -139,6 +155,8 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       setCards(filtered as LitterCard[]);
     } catch (error) {
       console.error('Error loading cards:', error);
+      // Set empty array on error so UI still renders
+      setCards([]);
     } finally {
       setLoading(false);
     }
@@ -192,9 +210,34 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading litters...</Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIcon}>
+              <Text style={styles.logoHeart}>❤️</Text>
+              <Text style={styles.logoPaw}>🐾</Text>
+            </View>
+            <Text style={styles.logoText}>PawMatch</Text>
+          </View>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => navigation.navigate('BuyerPreferences')}
+            >
+              <Text style={styles.headerIcon}>⚙️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => navigation.navigate('BuyerHome')}
+            >
+              <Text style={styles.headerIcon}>⊞</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading litters...</Text>
+        </View>
       </View>
     );
   }
@@ -339,33 +382,51 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
 
       {/* Card Stack via rn-swiper-list */}
       <View style={styles.cardContainer}>
-        <DiscoverySwiper
-          cards={cards}
-          onLike={(c) => { handleLike(); setCurrentIndex(i => Math.min(i + 1, cards.length)); }}
-          onPass={() => { handlePass(); setCurrentIndex(i => Math.min(i + 1, cards.length)); }}
-          onDetail={(c) => navigation.navigate('PetDetail', { petId: c.pet.id, listingId: c.id })}
-        />
+        {cards.length > 0 ? (
+          <DiscoverySwiper
+            cards={cards}
+            onLike={(c) => { handleLike(); setCurrentIndex(i => Math.min(i + 1, cards.length)); }}
+            onPass={() => { handlePass(); setCurrentIndex(i => Math.min(i + 1, cards.length)); }}
+            onDetail={(c) => navigation.navigate('PetDetail', { petId: c.pet.id, listingId: c.id })}
+          />
+        ) : (
+          <View style={styles.emptyStateInner}>
+            <Text style={styles.emptyIcon}>🐾</Text>
+            <Text style={styles.emptyTitle}>No pets available</Text>
+            <Text style={styles.emptyText}>
+              Widen your filters or check back later for new listings
+            </Text>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => navigation.navigate('BuyerPreferences')}
+            >
+              <Text style={styles.filterButtonText}>Adjust Filters</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* Bottom Actions */}
-      <View style={styles.actions}>
-        <CircleButton
-          icon="✖️"
-          color={colors.danger}
-          onPress={() => forceSwipe('left')}
-        />
-        <CircleButton
-          icon="ℹ️"
-          color={colors.secondary}
-          onPress={handleDetail}
-          size="large"
-        />
-        <CircleButton
-          icon="❤️"
-          color={colors.success}
-          onPress={() => forceSwipe('right')}
-        />
-      </View>
+      {cards.length > 0 && (
+        <View style={styles.actions}>
+          <CircleButton
+            icon="✖️"
+            color={colors.danger}
+            onPress={() => forceSwipe('left')}
+          />
+          <CircleButton
+            icon="ℹ️"
+            color={colors.secondary}
+            onPress={handleDetail}
+            size="large"
+          />
+          <CircleButton
+            icon="❤️"
+            color={colors.success}
+            onPress={() => forceSwipe('right')}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -477,6 +538,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 20,
+  },
+  emptyStateInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
   },
   cardPreview: {
     position: 'absolute',
