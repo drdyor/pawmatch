@@ -221,7 +221,7 @@ export const LogOvulationScreen: React.FC<LogOvulationScreenProps> = ({ route })
 
       {/* Breed Information */}
       {selectedPet && (
-        <BreedHeatInfo breed={selectedPet.breed} />
+        <BreedHeatInfo breed={selectedPet.breed} petId={selectedPet.id} />
       )}
 
       {/* Notes */}

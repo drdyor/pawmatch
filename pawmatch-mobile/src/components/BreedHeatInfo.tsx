@@ -1,9 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { colors } from '../theme/colors';
+import { supabase } from '../services/supabase';
 
 interface BreedHeatInfoProps {
   breed: string;
+  petId?: string;
+}
+
+interface BreedWarning {
+  warning_key: string;
+  warning_message: string;
+  cycle_number: number;
+  was_silent: boolean;
 }
 
 interface BreedInfo {
@@ -155,9 +164,36 @@ const DEFAULT_INFO: BreedInfo = {
   notes: 'Heat cycles vary by individual dog. Consult your veterinarian for breed-specific advice.'
 };
 
-export const BreedHeatInfo: React.FC<BreedHeatInfoProps> = ({ breed }) => {
+export const BreedHeatInfo: React.FC<BreedHeatInfoProps> = ({ breed, petId }) => {
   const info = BREED_HEAT_INFO[breed] || DEFAULT_INFO;
   const isKnownBreed = breed in BREED_HEAT_INFO;
+  const [warnings, setWarnings] = useState<BreedWarning[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (petId) {
+      loadWarnings();
+    }
+  }, [petId]);
+
+  const loadWarnings = async () => {
+    if (!petId) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('vw_breed_warnings')
+        .select('*')
+        .eq('pet_id', petId);
+
+      if (error) throw error;
+      setWarnings(data || []);
+    } catch (error) {
+      console.error('Error loading breed warnings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -169,6 +205,26 @@ export const BreedHeatInfo: React.FC<BreedHeatInfoProps> = ({ breed }) => {
           <Text style={styles.sizeText}>{info.size}</Text>
         </View>
       </View>
+
+      {/* Veterinarian-Approved Warnings */}
+      {warnings.length > 0 && (
+        <View style={styles.warningsSection}>
+          <Text style={styles.warningsSectionTitle}>⚠️ Important Breeding Guidance</Text>
+          {warnings.map((warning, index) => (
+            <View key={index} style={[
+              styles.warningCard,
+              warning.warning_key === 'silent_first' && styles.warningHigh,
+              warning.warning_key === 'late_maturity' && styles.warningMedium
+            ]}>
+              <Text style={styles.warningIcon}>
+                {warning.warning_key === 'silent_first' ? '🔔' : 
+                 warning.warning_key === 'late_maturity' ? '⏳' : '📋'}
+              </Text>
+              <Text style={styles.warningText}>{warning.warning_message}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       <View style={styles.infoGrid}>
         <InfoItem
@@ -323,5 +379,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#856404',
     lineHeight: 16,
+  },
+  warningsSection: {
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#fff8e1',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff9800',
+  },
+  warningsSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#e65100',
+    marginBottom: 12,
+  },
+  warningCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 10,
+    marginBottom: 8,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ff9800',
+  },
+  warningHigh: {
+    borderLeftColor: '#f44336',
+    backgroundColor: '#ffebee',
+  },
+  warningMedium: {
+    borderLeftColor: '#ff9800',
+    backgroundColor: '#fff8e1',
+  },
+  warningIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
   },
 });
