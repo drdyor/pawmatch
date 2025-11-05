@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native'
-import Swiper, { type SwiperCardRefType } from 'rn-swiper-list'
+import { Swiper, type SwiperCardRefType } from 'rn-swiper-list'
 import { colors } from '../theme/colors'
 import { Listing, Pet } from '../types'
 
@@ -16,7 +16,15 @@ interface DiscoverySwiperProps {
 }
 
 export function DiscoverySwiper({ cards, onLike, onPass, onDetail }: DiscoverySwiperProps) {
-  const ref = useRef<SwiperCardRefType>()
+  const ref = useRef<SwiperCardRefType>(null)
+
+  const calculateAge = (dateOfBirth: string): number => {
+    if (!dateOfBirth) return 0;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    const months = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    return Math.floor(months / 12); // return age in years
+  };
 
   const renderCard = (item: LitterCard) => (
     <View style={styles.cardStyle}>
@@ -45,14 +53,6 @@ export function DiscoverySwiper({ cards, onLike, onPass, onDetail }: DiscoverySw
     </View>
   );
 
-  const calculateAge = (dateOfBirth: string): number => {
-    if (!dateOfBirth) return 0;
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    const months = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    return Math.floor(months / 12); // return age in years
-  };
-
   const OverlayLabelRight = () => (
     <View style={[styles.overlay, styles.saveOverlay]}>
       <Text style={styles.overlayText}>SAVE</Text>
@@ -64,6 +64,19 @@ export function DiscoverySwiper({ cards, onLike, onPass, onDetail }: DiscoverySw
     </View>
   )
 
+  // Handle empty cards array
+  if (!cards || cards.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyEmoji}>🐾</Text>
+          <Text style={styles.emptyText}>No pets available</Text>
+          <Text style={styles.emptySubtext}>Check back later or adjust your filters</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Swiper<LitterCard>
@@ -72,11 +85,11 @@ export function DiscoverySwiper({ cards, onLike, onPass, onDetail }: DiscoverySw
         cardStyle={styles.swiperCardContainer}
         overlayLabelContainerStyle={styles.overlayLabelContainerStyle}
         renderCard={renderCard}
-        onSwipeRight={(index) => {
+        onSwipeRight={(index: number) => {
           const card = cards[index]
           if (card) onLike(card)
         }}
-        onSwipeLeft={(index) => {
+        onSwipeLeft={(index: number) => {
           const card = cards[index]
           if (card) onPass(card)
         }}
@@ -207,5 +220,26 @@ const styles = StyleSheet.create({
   overlayLabelContainerStyle: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  emptyEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 })

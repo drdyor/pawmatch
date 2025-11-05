@@ -199,30 +199,110 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     );
   }
 
+  // Handle empty cards
+  if (!cards || cards.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIcon}>
+              <Text style={styles.logoHeart}>❤️</Text>
+              <Text style={styles.logoPaw}>🐾</Text>
+            </View>
+            <Text style={styles.logoText}>PawMatch</Text>
+          </View>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => navigation.navigate('BuyerPreferences')}
+            >
+              <Text style={styles.headerIcon}>⚙️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => navigation.navigate('BuyerHome')}
+            >
+              <Text style={styles.headerIcon}>⊞</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>✨</Text>
+          <Text style={styles.emptyTitle}>No pets available</Text>
+          <Text style={styles.emptyText}>
+            Widen your filters or check back later for new listings
+          </Text>
+          <View style={styles.emptyActions}>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => navigation.navigate('BuyerPreferences')}
+            >
+              <Text style={styles.filterButtonText}>Adjust Filters</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={() => {
+                setCurrentIndex(0);
+                loadCards();
+              }}
+            >
+              <Text style={styles.refreshButtonText}>Refresh</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   if (currentIndex >= cards.length) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyIcon}>✨</Text>
-        <Text style={styles.emptyTitle}>No more nearby litters</Text>
-        <Text style={styles.emptyText}>
-          Widen your filters or follow more breeders to get alerts
-        </Text>
-        <View style={styles.emptyActions}>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => navigation.navigate('BuyerPreferences')}
-          >
-            <Text style={styles.filterButtonText}>Adjust Filters</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={() => {
-              setCurrentIndex(0);
-              loadCards();
-            }}
-          >
-            <Text style={styles.refreshButtonText}>Refresh</Text>
-          </TouchableOpacity>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIcon}>
+              <Text style={styles.logoHeart}>❤️</Text>
+              <Text style={styles.logoPaw}>🐾</Text>
+            </View>
+            <Text style={styles.logoText}>PawMatch</Text>
+          </View>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => navigation.navigate('BuyerPreferences')}
+            >
+              <Text style={styles.headerIcon}>⚙️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => navigation.navigate('BuyerHome')}
+            >
+              <Text style={styles.headerIcon}>⊞</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>✨</Text>
+          <Text style={styles.emptyTitle}>No more nearby litters</Text>
+          <Text style={styles.emptyText}>
+            Widen your filters or follow more breeders to get alerts
+          </Text>
+          <View style={styles.emptyActions}>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => navigation.navigate('BuyerPreferences')}
+            >
+              <Text style={styles.filterButtonText}>Adjust Filters</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={() => {
+                setCurrentIndex(0);
+                loadCards();
+              }}
+            >
+              <Text style={styles.refreshButtonText}>Refresh</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
