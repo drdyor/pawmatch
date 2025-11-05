@@ -58,6 +58,7 @@ export function SwipePreviewScreen({
 }: SwipePreviewScreenProps) {
   const [index, setIndex] = useState(0);
   const [matched, setMatched] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [arrangements, setArrangements] = useState({
     pickOfLitter: false,
     splitPuppies: false,
@@ -65,6 +66,11 @@ export function SwipePreviewScreen({
   });
 
   const currentPet = SAMPLE_PETS[index];
+
+  const handleFinishOnboarding = () => {
+    // Show welcome modal first, then complete onboarding
+    setShowWelcomeModal(true);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -127,13 +133,58 @@ export function SwipePreviewScreen({
         </Card>
 
         <TouchableOpacity
-          onPress={() => onNext({})}
+          onPress={handleFinishOnboarding}
           style={styles.button}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>Finish onboarding</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Welcome Modal - Shows AFTER finishing onboarding */}
+      <Modal
+        visible={showWelcomeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowWelcomeModal(false);
+          onNext({});
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <Card style={styles.modal}>
+            <View style={styles.modalContent}>
+              <Text style={styles.matchIcon}>🐾</Text>
+              <Text style={styles.matchTitle}>Welcome to PawMatch!</Text>
+              <Text style={styles.matchText}>
+                Let's discover pets in your area searching for a mate
+              </Text>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setShowWelcomeModal(false);
+                  onNext({ initialTab: 'discover' });
+                }}
+                style={styles.welcomeButton}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.welcomeButtonText}>Start Discovering</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setShowWelcomeModal(false);
+                  onNext({});
+                }}
+                style={styles.skipButton}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.skipButtonText}>Skip for Now</Text>
+              </TouchableOpacity>
+            </View>
+          </Card>
+        </View>
+      </Modal>
 
       {/* Match Modal */}
       <Modal
@@ -231,7 +282,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   imageContainer: {
-    height: 256,
+    height: 400,
     backgroundColor: '#F5F5F5',
     position: 'relative',
   },
@@ -409,5 +460,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  welcomeButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#FFC700',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  welcomeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  skipButton: {
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  skipButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#737373',
   },
 });

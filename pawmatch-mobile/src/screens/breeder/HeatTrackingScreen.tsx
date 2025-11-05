@@ -218,9 +218,18 @@ export const HeatTrackingScreen: React.FC = () => {
       {/* Calendar View - Only show when a pet is selected */}
       {selectedPetId && (
         <View style={styles.calendarContainer}>
+          <Text style={styles.calendarTitle}>
+            Tap any date to log a new heat cycle
+          </Text>
           <OvulationCalendar
             femalePets={femalePets}
             selectedPetId={selectedPetId}
+            onDatePress={(date) => {
+              const pet = femalePets.find(p => p.id === selectedPetId);
+              if (pet) {
+                handleLogOvulation(pet);
+              }
+            }}
           />
         </View>
       )}
@@ -363,6 +372,14 @@ const styles = StyleSheet.create({
   calendarContainer: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    padding: 16,
+  },
+  calendarTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
   },
   emptyState: {
     flex: 1,
