@@ -1,115 +1,51 @@
-import * as Notifications from 'expo-notifications';
+// NOTE: Push notifications are disabled for Expo Go (SDK 54+)
+// To enable notifications, build a development build with: eas build --profile development
+// This file provides stub implementations that log instead of crashing
+
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
-import { supabase } from './supabase';
 
-// Configure notification behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+const DEV_MODE = __DEV__;
 
+// No-op notification handler for Expo Go
 export const registerForPushNotificationsAsync = async () => {
-  let token;
-
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FFC700',
-    });
+  if (DEV_MODE) {
+    console.log('[Notifications] Skipped - not available in Expo Go. Use dev build for push notifications.');
   }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    alert('Failed to get push token for push notification!');
-    return;
-  }
-
-  token = (await Notifications.getExpoPushTokenAsync({
-    projectId: Constants.expoConfig?.extra?.eas?.projectId,
-  })).data;
-
-  return token;
+  return null;
 };
 
 export const savePushToken = async (token: string) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    // Save token to user profile
-    await supabase
-      .from('users')
-      .update({ push_token: token })
-      .eq('id', user.id);
-  } catch (error) {
-    console.error('Error saving push token:', error);
+  if (DEV_MODE) {
+    console.log('[Notifications] Would save push token:', token);
   }
 };
 
 export const scheduleLitterAlertNotification = async (breedName: string, city: string, price: number) => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '🐾 New Litter Available!',
-      body: `${breedName} puppies available in ${city}. €${(price / 100).toFixed(0)} each.`,
-      data: { type: 'litter_alert' },
-    },
-    trigger: null, // Send immediately
-  });
+  if (DEV_MODE) {
+    console.log(`[Notifications] 🐾 New Litter: ${breedName} in ${city} - €${(price / 100).toFixed(0)}`);
+  }
 };
 
 export const scheduleUrgentShelterAlert = async (animalCount: number, shelterCity: string) => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '🚨 Urgent: Animals Need Homes',
-      body: `${animalCount} animal${animalCount > 1 ? 's' : ''} at ${shelterCity} shelter need immediate foster/adoption. 72h deadline.`,
-      data: { type: 'shelter_urgent' },
-    },
-    trigger: null,
-  });
+  if (DEV_MODE) {
+    console.log(`[Notifications] 🚨 Urgent: ${animalCount} animals at ${shelterCity} shelter need homes`);
+  }
 };
 
 export const scheduleHeatNotification = async (femaleName: string, breed: string, city: string) => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '🔥 Female in Heat Nearby',
-      body: `${femaleName} (${breed}) is in heat in ${city}. Breeding opportunity available.`,
-      data: { type: 'heat_notification' },
-    },
-    trigger: null,
-  });
+  if (DEV_MODE) {
+    console.log(`[Notifications] 🔥 Heat: ${femaleName} (${breed}) in ${city}`);
+  }
 };
 
 export const scheduleMatchNotification = async (studName: string, breed: string) => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '💛 New Match!',
-      body: `Someone is interested in ${studName} for breeding. Check your messages!`,
-      data: { type: 'match' },
-    },
-    trigger: null,
-  });
+  if (DEV_MODE) {
+    console.log(`[Notifications] 💛 Match: Someone interested in ${studName}`);
+  }
 };
 
 export const scheduleMessageNotification = async (senderName: string, messagePreview: string) => {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: `💬 ${senderName}`,
-      body: messagePreview,
-      data: { type: 'message' },
-    },
-    trigger: null,
-  });
+  if (DEV_MODE) {
+    console.log(`[Notifications] 💬 ${senderName}: ${messagePreview}`);
+  }
 };

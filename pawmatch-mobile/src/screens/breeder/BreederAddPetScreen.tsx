@@ -8,21 +8,88 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
+  FlatList,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
+import { useBreedSearch } from '../../hooks/useBreedSearch';
 
 export default function BreederAddPetScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [species, setSpecies] = useState<'dog' | 'cat'>('dog');
   const [breed, setBreed] = useState('');
+  const [breedQuery, setBreedQuery] = useState('');
+  const [showBreedSuggestions, setShowBreedSuggestions] = useState(false);
   const [sex, setSex] = useState<'male' | 'female'>('female');
+  
+  // Age input: support both date and months
+  const [ageInputMode, setAgeInputMode] = useState<'date' | 'months'>('months');
   const [dateOfBirth, setDateOfBirth] = useState('');
+  const [ageYears, setAgeYears] = useState('');
+  const [ageMonths, setAgeMonths] = useState('');
+  
   const [weight, setWeight] = useState('');
   const [size, setSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [healthNotes, setHealthNotes] = useState('');
   const [isStudAvailable, setIsStudAvailable] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Breed search hook
+  const { filteredBreeds, searchBreeds } = useBreedSearch();
+
+  const pickImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please grant camera roll access to add photos');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 10,
+    });
+
+    if (!result.canceled && result.assets) {
+      const newPhotos = result.assets.map(asset => asset.uri);
+      setPhotos([...photos, ...newPhotos].slice(0, 10)); // Max 10 photos
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(photos.filter((_, i) => i !== index));
+  };
+
+  const handleBreedSearch = (query: string) => {
+    setBreedQuery(query);
+    setBreed(query);
+    searchBreeds(query, species);
+    setShowBreedSuggestions(query.length > 0);
+  };
+
+  const selectBreed = (selectedBreed: string) => {
+    setBreed(selectedBreed);
+    setBreedQuery(selectedBreed);
+    setShowBreedSuggestions(false);
+  };
+
+  const calculateDateOfBirth = () => {
+    if (ageInputMode === 'months' && (ageYears || ageMonths)) {
+      const today = new Date();
+      const years = parseInt(ageYears || '0');
+      const months = parseInt(ageMonths || '0');
+      
+      today.setFullYear(today.getFullYear() - years);
+      today.setMonth(today.getMonth() - months);
+      
+      return today.toISOString().split('T')[0];
+    }
+    return dateOfBirth || null;
+  };
 
   const handleSave = async () => {
     // Validation
@@ -31,8 +98,8 @@ export default function BreederAddPetScreen({ navigation }: any) {
       return;
     }
 
-    // Validate date format
-    if (dateOfBirth && !dateOfBirth.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    // Validate date format if using date mode
+    if (ageInputMode === 'date' && dateOfBirth && !dateOfBirth.match(/^\d{4}-\d{2}-\d{2}$/)) {
       Alert.alert('Error', 'Date of birth must be in format YYYY-MM-DD');
       return;
     }
@@ -50,6 +117,7 @@ export default function BreederAddPetScreen({ navigation }: any) {
         .single();
 
       const weightNum = weight ? parseFloat(weight) : null;
+      const calculatedDOB = calculateDateOfBirth();
 
       const { data: pet, error } = await supabase
         .from('pets')
@@ -60,14 +128,14 @@ export default function BreederAddPetScreen({ navigation }: any) {
           species,
           breed,
           sex,
-          date_of_birth: dateOfBirth || null,
+          date_of_birth: calculatedDOB,
           weight: weightNum,
           size: species === 'dog' ? size : null,
           city: userData?.city || 'Malta',
           country: userData?.country || 'Malta',
           status: isStudAvailable ? 'stud_available' : 'available',
           description: healthNotes || null,
-          photos: [],
+          photos: photos,
         })
         .select()
         .single();
@@ -141,10 +209,26 @@ export default function BreederAddPetScreen({ navigation }: any) {
           <Text style={styles.label}>Breed *</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g., Border Collie"
-            value={breed}
-            onChangeText={setBreed}
+            placeholder="Start typing breed name..."
+            value={breedQuery}
+            onChangeText={handleBreedSearch}
+            onFocus={() => breedQuery.length > 0 && setShowBreedSuggestions(true)}
           />
+          {showBreedSuggestions && filteredBreeds.length > 0 && (
+            <View style={styles.suggestionsContainer}>
+              <ScrollView style={styles.suggestionsList} nestedScrollEnabled>
+                {filteredBreeds.slice(0, 8).map((breedName, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.suggestionItem}
+                    onPress={() => selectBreed(breedName)}
+                  >
+                    <Text style={styles.suggestionText}>{breedName}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
 
         <View style={styles.inputGroup}>
@@ -166,14 +250,56 @@ export default function BreederAddPetScreen({ navigation }: any) {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Date of Birth</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="YYYY-MM-DD (e.g., 2022-03-15)"
-            value={dateOfBirth}
-            onChangeText={setDateOfBirth}
-          />
-          <Text style={styles.helperText}>Format: YYYY-MM-DD</Text>
+          <Text style={styles.label}>Age</Text>
+          <View style={styles.toggleGroup}>
+            <TouchableOpacity
+              style={[styles.toggleButton, ageInputMode === 'months' && styles.toggleButtonActive]}
+              onPress={() => setAgeInputMode('months')}
+            >
+              <Text style={styles.toggleText}>Years/Months</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, ageInputMode === 'date' && styles.toggleButtonActive]}
+              onPress={() => setAgeInputMode('date')}
+            >
+              <Text style={styles.toggleText}>Birth Date</Text>
+            </TouchableOpacity>
+          </View>
+
+          {ageInputMode === 'months' ? (
+            <View style={styles.ageInputRow}>
+              <View style={styles.ageInputHalf}>
+                <Text style={styles.ageInputLabel}>Years</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0"
+                  value={ageYears}
+                  onChangeText={setAgeYears}
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.ageInputHalf}>
+                <Text style={styles.ageInputLabel}>Months</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0"
+                  value={ageMonths}
+                  onChangeText={setAgeMonths}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          ) : (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD (e.g., 2022-03-15)"
+                value={dateOfBirth}
+                onChangeText={setDateOfBirth}
+              />
+              <Text style={styles.helperText}>Format: YYYY-MM-DD</Text>
+            </>
+          )}
         </View>
 
         {species === 'dog' && (
@@ -245,11 +371,29 @@ export default function BreederAddPetScreen({ navigation }: any) {
           </TouchableOpacity>
         )}
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoIcon}>💡</Text>
-          <Text style={styles.infoText}>
-            You can add photos and health records after creating the pet profile.
-          </Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Photos (Optional)</Text>
+          <TouchableOpacity style={styles.photoPickerButton} onPress={pickImages}>
+            <Text style={styles.photoPickerIcon}>📷</Text>
+            <Text style={styles.photoPickerText}>Add Photos from Camera Roll</Text>
+            <Text style={styles.photoPickerSubtext}>Tap to select up to 10 photos</Text>
+          </TouchableOpacity>
+          
+          {photos.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosPreview}>
+              {photos.map((photo, index) => (
+                <View key={index} style={styles.photoPreviewContainer}>
+                  <Image source={{ uri: photo }} style={styles.photoPreview} />
+                  <TouchableOpacity
+                    style={styles.removePhotoButton}
+                    onPress={() => removePhoto(index)}
+                  >
+                    <Text style={styles.removePhotoText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         <TouchableOpacity
@@ -406,5 +550,89 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.background,
+  },
+  suggestionsContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    maxHeight: 200,
+    marginTop: 4,
+  },
+  suggestionsList: {
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  suggestionText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  ageInputRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  ageInputHalf: {
+    flex: 1,
+    gap: 4,
+  },
+  ageInputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  photoPickerButton: {
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    gap: 8,
+  },
+  photoPickerIcon: {
+    fontSize: 32,
+  },
+  photoPickerText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  photoPickerSubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  photosPreview: {
+    marginTop: 12,
+  },
+  photoPreviewContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  photoPreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: colors.text,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePhotoText: {
+    color: colors.background,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
