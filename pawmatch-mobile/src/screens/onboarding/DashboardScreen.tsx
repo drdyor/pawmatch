@@ -11,6 +11,8 @@ import { Card } from '../../components/ui/Card';
 
 interface DashboardScreenProps {
   initialTab?: string;
+  onResetOnboarding?: () => void;
+  onNavigateToApp?: (tab?: string) => void;
 }
 
 const TABS = [
@@ -23,6 +25,8 @@ const TABS = [
 
 export function DashboardScreen({
   initialTab = 'match',
+  onResetOnboarding,
+  onNavigateToApp,
 }: DashboardScreenProps) {
   const [tab, setTab] = useState(initialTab);
 
@@ -33,8 +37,15 @@ export function DashboardScreen({
         <View style={styles.headerRow}>
           <Text style={styles.headerIcon}>🐾</Text>
           <Text style={styles.headerTitle}>PawMatch</Text>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={onResetOnboarding}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.resetText}>Reset</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.headerSubtitle}>Independent Owner dashboard</Text>
+        <Text style={styles.headerSubtitle}>Independent Owner dashboard (Demo)</Text>
       </View>
 
       {/* Content */}
@@ -51,7 +62,11 @@ export function DashboardScreen({
             <Text style={styles.cardText}>
               Enable matchmaking during fertile days to get better matches.
             </Text>
-            <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
+            <TouchableOpacity 
+              style={styles.actionButton} 
+              activeOpacity={0.8}
+              onPress={() => onNavigateToApp?.('discover')}
+            >
               <Text style={styles.actionButtonText}>Open Swipe Deck</Text>
             </TouchableOpacity>
           </Card>
@@ -69,6 +84,7 @@ export function DashboardScreen({
             <TouchableOpacity
               style={styles.secondaryButton}
               activeOpacity={0.7}
+              onPress={() => onNavigateToApp?.('pets')}
             >
               <Text style={styles.plusIcon}>➕</Text>
               <Text style={styles.secondaryButtonText}>Add pet</Text>
@@ -88,6 +104,7 @@ export function DashboardScreen({
             <TouchableOpacity
               style={styles.secondaryButton}
               activeOpacity={0.7}
+              onPress={() => onNavigateToApp?.('heat')}
             >
               <Text style={styles.bellIcon}>🔔</Text>
               <Text style={styles.secondaryButtonText}>
@@ -169,7 +186,19 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
+  },
+  resetButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+  },
+  resetText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
   },
   headerIcon: {
     fontSize: 24,

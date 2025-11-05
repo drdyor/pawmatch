@@ -106,7 +106,18 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       );
     }
     if (step === 5) {
-      return <DashboardScreen initialTab={data.initialTab} />;
+      return (
+        <DashboardScreen 
+          initialTab={data.initialTab}
+          onResetOnboarding={() => {
+            setStep(0);
+            setData({ role: 'independent' });
+          }}
+          onNavigateToApp={(tab) => {
+            onComplete({ ...data, initialTab: tab });
+          }}
+        />
+      );
     }
   }
 

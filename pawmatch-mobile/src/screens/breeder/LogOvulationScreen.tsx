@@ -14,6 +14,7 @@ import { format, addDays } from 'date-fns';
 import { Pet, HeatCycle } from '../../types';
 import { supabase } from '../../services/supabase';
 import { useNavigation } from '@react-navigation/native';
+import { BreedHeatInfo } from '../../components/BreedHeatInfo';
 
 interface LogOvulationScreenProps {
   route?: {
@@ -216,6 +217,11 @@ export const LogOvulationScreen: React.FC<LogOvulationScreenProps> = ({ route })
             These are estimates based on typical dog cycles. Consult your vet for accurate timing.
           </Text>
         </View>
+      )}
+
+      {/* Breed Information */}
+      {selectedPet && (
+        <BreedHeatInfo breed={selectedPet.breed} />
       )}
 
       {/* Notes */}
