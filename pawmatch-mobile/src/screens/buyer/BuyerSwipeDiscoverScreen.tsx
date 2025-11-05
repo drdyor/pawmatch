@@ -62,7 +62,7 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
       if (user) {
         const { data } = await supabase
           .from('users')
-          .select('preferred_species, preferred_dog_size, preferred_age')
+          .select('preferred_species, preferred_dog_size, preferred_age, preferred_energy_level, preferred_activities, preferred_breeds, preferred_gender')
           .eq('id', user.id)
           .single();
         userPrefs = data;
@@ -81,9 +81,60 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
 
       // Filter by preferences
       let filtered = data || [];
+      
+      // Species filter
       if (userPrefs?.preferred_species && userPrefs.preferred_species !== 'both') {
         filtered = filtered.filter((l: any) => l.pet?.species === userPrefs.preferred_species);
       }
+
+      // Breed filter (multi-select)
+      if (userPrefs?.preferred_breeds && Array.isArray(userPrefs.preferred_breeds) && userPrefs.preferred_breeds.length > 0) {
+        filtered = filtered.filter((l: any) => 
+          userPrefs.preferred_breeds.some((breed: string) => 
+            l.pet?.breed?.toLowerCase().includes(breed.toLowerCase())
+          )
+        );
+      }
+
+      // Gender filter
+      if (userPrefs?.preferred_gender && userPrefs.preferred_gender !== 'both') {
+        filtered = filtered.filter((l: any) => l.pet?.sex === userPrefs.preferred_gender);
+      }
+
+      // Size filter
+      if (userPrefs?.preferred_dog_size && userPrefs.preferred_dog_size !== 'any') {
+        filtered = filtered.filter((l: any) => {
+          const petSize = l.pet?.size;
+          if (!petSize) return false;
+          
+          if (userPrefs.preferred_dog_size === 'xs_small') {
+            return petSize === 'small';
+          } else if (userPrefs.preferred_dog_size === 'medium') {
+            return petSize === 'medium';
+          } else if (userPrefs.preferred_dog_size === 'large_xl') {
+            return petSize === 'large';
+          }
+          return true;
+        });
+      }
+
+      // Age filter
+      if (userPrefs?.preferred_age && Array.isArray(userPrefs.preferred_age) && userPrefs.preferred_age.length > 0) {
+        filtered = filtered.filter((l: any) => {
+          if (!l.pet?.date_of_birth) return false;
+          const age = calculateAge(l.pet.date_of_birth);
+          
+          return userPrefs.preferred_age.some((agePref: string) => {
+            if (agePref === 'puppy') return age < 2;
+            if (agePref === 'young') return age >= 2 && age <= 6;
+            if (agePref === 'senior') return age > 7;
+            return true;
+          });
+        });
+      }
+
+      // Energy level and activities filtering would require pet metadata
+      // For now, we'll skip these if pets don't have activity/energy fields
 
       setCards(filtered as LitterCard[]);
     } catch (error) {
@@ -91,6 +142,14 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateAge = (dateOfBirth: string): number => {
+    if (!dateOfBirth) return 0;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    const months = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    return months / 12; // return age in years
   };
 
   const forceSwipe = (direction: 'left' | 'right') => {
@@ -173,13 +232,30 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      {/* Filter Bar */}
-      <TouchableOpacity
-        style={styles.filterBar}
-        onPress={() => navigation.navigate('BuyerPreferences')}
-      >
-        <Text style={styles.filterBarText}>🔎 Breeds · € · Preferences</Text>
-      </TouchableOpacity>
+      {/* Header with PawMatch Logo */}
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoIcon}>
+            <Text style={styles.logoHeart}>❤️</Text>
+            <Text style={styles.logoPaw}>🐾</Text>
+          </View>
+          <Text style={styles.logoText}>PawMatch</Text>
+        </View>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={() => navigation.navigate('BuyerPreferences')}
+          >
+            <Text style={styles.headerIcon}>⚙️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={() => navigation.navigate('BuyerHome')}
+          >
+            <Text style={styles.headerIcon}>⊞</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Card Stack via rn-swiper-list */}
       <View style={styles.cardContainer}>
@@ -209,13 +285,6 @@ export default function BuyerSwipeDiscoverScreen({ navigation }: any) {
           color={colors.success}
           onPress={() => forceSwipe('right')}
         />
-      </View>
-
-      {/* Counter */}
-      <View style={styles.counter}>
-        <Text style={styles.counterText}>
-          {currentIndex + 1} / {cards.length}
-        </Text>
       </View>
     </View>
   );
@@ -271,31 +340,63 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
   },
-  filterBar: {
-    position: 'absolute',
-    top: 60,
-    alignSelf: 'center',
-    backgroundColor: colors.background,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    zIndex: 10,
+    paddingTop: 60,
+    paddingBottom: 16,
+    backgroundColor: colors.background,
   },
-  filterBarText: {
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  logoHeart: {
+    fontSize: 20,
+    position: 'absolute',
+  },
+  logoPaw: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#2F3A4A',
+    position: 'absolute',
+    top: 4,
+    left: 4,
+  },
+  logoText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  headerIconButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIcon: {
+    fontSize: 20,
+    color: colors.text,
   },
   cardContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
+    paddingTop: 20,
   },
   cardPreview: {
     position: 'absolute',
@@ -415,25 +516,6 @@ const styles = StyleSheet.create({
   },
   circleIcon: {
     fontSize: 28,
-  },
-  counter: {
-    position: 'absolute',
-    top: 120,
-    alignSelf: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  counterText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2F3A4A',
   },
   emptyContainer: {
     flex: 1,

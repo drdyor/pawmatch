@@ -8,6 +8,7 @@ import { SwipePreviewScreen } from './SwipePreviewScreen';
 import { DashboardScreen } from './DashboardScreen';
 import { VetIntroScreen } from './VetIntroScreen';
 import { VetDashboardScreen } from './VetDashboardScreen';
+import { BuyerFilterOnboarding } from './BuyerFilterOnboarding';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => void;
@@ -45,7 +46,56 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   // Independent/Breeder/Buyer/Shelter flow
   if (role !== 'vet') {
-    if (step === 0) {
+    // For buyers, show filter step after role selection
+    if (role === 'buyer') {
+      if (step === 0) {
+        return (
+          <RoleSelectScreen
+            onNext={(d) => {
+              updateData(d);
+              setStep(1);
+            }}
+          />
+        );
+      }
+      if (step === 1) {
+        return (
+          <BuyerFilterOnboarding
+            onBack={() => setStep(0)}
+            onNext={() => {
+              setStep(2); // Skip to SwipePreview
+            }}
+          />
+        );
+      }
+      if (step === 2) {
+        return (
+          <SwipePreviewScreen
+            onBack={() => setStep(1)}
+            onNext={(d) => {
+              updateData(d);
+              setStep(3);
+            }}
+          />
+        );
+      }
+      if (step === 3) {
+        return (
+          <DashboardScreen
+            initialTab={data.initialTab}
+            onResetOnboarding={() => {
+              setStep(0);
+              setData({ role: 'buyer' });
+            }}
+            onNavigateToApp={(tab) => {
+              onComplete({ ...data, initialTab: tab });
+            }}
+          />
+        );
+      }
+    } else {
+      // Existing flow for breeders/independent
+      if (step === 0) {
       return (
         <RoleSelectScreen
           onNext={(d) => {

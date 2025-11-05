@@ -278,3 +278,9 @@ src/
 ---
 
 **Built with ❤️ for Malta's pet community 🇲🇹🐾**
+
+---
+
+## 📸 **Third-Party Resources**
+
+Dog breed sample images sourced from [Dog-Breeds-Dataset by Atharva Taras](https://github.com/AtharvaTaras/Dog-Breeds-Dataset), licensed under CC BY 4.0.

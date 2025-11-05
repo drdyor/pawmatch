@@ -1,16 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { colors } from '../../theme/colors';
 import { supabase } from '../../services/supabase';
+import { BreedFilter } from '../../components/BreedFilter';
 
-type Species = 'dog' | 'cat' | 'both';
-type DogSize = 'small' | 'medium' | 'large' | 'any';
-type Age = 'young' | 'adult' | 'senior' | 'any';
+type EnergyLevel = 'very_relaxed' | 'mid_energy' | 'high_energy' | null;
+type AgePreference = 'puppy' | 'young' | 'adult' | 'senior' | null;
+type SizePreference = 'xs_small' | 'medium' | 'large_xl' | null;
+type GenderPreference = 'male' | 'female' | 'both' | null;
+
+const ACTIVITIES = [
+  'Outdoor Play',
+  'Indoor Play',
+  'Trails/Hiking',
+  'Gentle Walks',
+  'Jogging',
+  'Swimming',
+  'Fetch/Chase',
+  'Lots of Cuddles',
+  'Bike Alongs',
+  'Park Picnics',
+  'City Exploring',
+  'Brunch Bunch',
+  'Agility',
+];
 
 export default function BuyerPreferencesScreen({ navigation }: any) {
-  const [species, setSpecies] = useState<Species>('both');
-  const [dogSize, setDogSize] = useState<DogSize>('any');
-  const [age, setAge] = useState<Age>('any');
+  const [energyLevel, setEnergyLevel] = useState<EnergyLevel>(null);
+  const [agePreference, setAgePreference] = useState<AgePreference[]>([]);
+  const [sizePreference, setSizePreference] = useState<SizePreference>(null);
+  const [activities, setActivities] = useState<string[]>([]);
+  const [genderPreference, setGenderPreference] = useState<GenderPreference>(null);
+  const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -24,16 +52,19 @@ export default function BuyerPreferencesScreen({ navigation }: any) {
 
       const { data, error } = await supabase
         .from('users')
-        .select('preferred_species, preferred_dog_size, preferred_age')
+        .select('preferred_energy_level, preferred_age, preferred_dog_size, preferred_activities, preferred_gender, preferred_breeds')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
 
       if (data) {
-        setSpecies(data.preferred_species || 'both');
-        setDogSize(data.preferred_dog_size || 'any');
-        setAge(data.preferred_age || 'any');
+        setEnergyLevel(data.preferred_energy_level || null);
+        setAgePreference(data.preferred_age ? (Array.isArray(data.preferred_age) ? data.preferred_age : [data.preferred_age]) : []);
+        setSizePreference(data.preferred_dog_size || null);
+        setActivities(data.preferred_activities || []);
+        setGenderPreference(data.preferred_gender || null);
+        setSelectedBreeds(data.preferred_breeds || []);
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
@@ -49,9 +80,12 @@ export default function BuyerPreferencesScreen({ navigation }: any) {
       const { error } = await supabase
         .from('users')
         .update({
-          preferred_species: species,
-          preferred_dog_size: dogSize,
-          preferred_age: age,
+          preferred_energy_level: energyLevel,
+          preferred_age: agePreference.length > 0 ? agePreference : null,
+          preferred_dog_size: sizePreference,
+          preferred_activities: activities,
+          preferred_gender: genderPreference,
+          preferred_breeds: selectedBreeds.length > 0 ? selectedBreeds : null,
         })
         .eq('id', user.id);
 
@@ -66,95 +100,133 @@ export default function BuyerPreferencesScreen({ navigation }: any) {
     }
   };
 
+  const toggleAgePreference = (age: AgePreference) => {
+    if (agePreference.includes(age)) {
+      setAgePreference(agePreference.filter(a => a !== age));
+    } else {
+      setAgePreference([...agePreference, age]);
+    }
+  };
+
+  const toggleActivity = (activity: string) => {
+    if (activities.includes(activity)) {
+      setActivities(activities.filter(a => a !== activity));
+    } else {
+      setActivities([...activities, activity]);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Adoption Preferences</Text>
-        <Text style={styles.subtitle}>Help us find your perfect companion</Text>
+        <Text style={styles.title}>Picky Pup? No problem!</Text>
+        <Text style={styles.subtitle}>Let's narrow it down...</Text>
       </View>
 
+      {/* Energy Level */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>What type of pet?</Text>
-        <View style={styles.optionGroup}>
-          <OptionButton
-            label="Dogs 🐕"
-            selected={species === 'dog'}
-            onPress={() => setSpecies('dog')}
+        <Text style={styles.sectionTitle}>Filter By Energy Level</Text>
+        <View style={styles.buttonRow}>
+          <FilterButton
+            label="Very Relaxed"
+            selected={energyLevel === 'very_relaxed'}
+            onPress={() => setEnergyLevel(energyLevel === 'very_relaxed' ? null : 'very_relaxed')}
           />
-          <OptionButton
-            label="Cats 🐈"
-            selected={species === 'cat'}
-            onPress={() => setSpecies('cat')}
+          <FilterButton
+            label="Mid-Energy"
+            selected={energyLevel === 'mid_energy'}
+            onPress={() => setEnergyLevel(energyLevel === 'mid_energy' ? null : 'mid_energy')}
           />
-          <OptionButton
-            label="Both 🐾"
-            selected={species === 'both'}
-            onPress={() => setSpecies('both')}
+          <FilterButton
+            label="High Energy"
+            selected={energyLevel === 'high_energy'}
+            onPress={() => setEnergyLevel(energyLevel === 'high_energy' ? null : 'high_energy')}
           />
         </View>
       </View>
 
-      {(species === 'dog' || species === 'both') && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dog Size Preference</Text>
-          <View style={styles.optionGroup}>
-            <OptionButton
-              label="Small"
-              selected={dogSize === 'small'}
-              onPress={() => setDogSize('small')}
-              sublabel="< 10kg"
-            />
-            <OptionButton
-              label="Medium"
-              selected={dogSize === 'medium'}
-              onPress={() => setDogSize('medium')}
-              sublabel="10-25kg"
-            />
-            <OptionButton
-              label="Large"
-              selected={dogSize === 'large'}
-              onPress={() => setDogSize('large')}
-              sublabel="> 25kg"
-            />
-            <OptionButton
-              label="Any Size"
-              selected={dogSize === 'any'}
-              onPress={() => setDogSize('any')}
-            />
-          </View>
-        </View>
-      )}
-
+      {/* Age Preference */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Age Preference</Text>
-        <View style={styles.optionGroup}>
-          <OptionButton
-            label="Young"
-            selected={age === 'young'}
-            onPress={() => setAge('young')}
-            sublabel="< 2 years"
+        <Text style={styles.sectionTitle}>Filter By Pet Age Preference</Text>
+        <View style={styles.buttonRow}>
+          <FilterButton
+            label="Puppy - 2 y.o."
+            selected={agePreference.includes('puppy')}
+            onPress={() => toggleAgePreference('puppy')}
           />
-          <OptionButton
-            label="Adult"
-            selected={age === 'adult'}
-            onPress={() => setAge('adult')}
-            sublabel="2-7 years"
+          <FilterButton
+            label="3 - 6 y.o."
+            selected={agePreference.includes('young')}
+            onPress={() => toggleAgePreference('young')}
           />
-          <OptionButton
-            label="Senior"
-            selected={age === 'senior'}
-            onPress={() => setAge('senior')}
-            sublabel="> 7 years"
-          />
-          <OptionButton
-            label="Any Age"
-            selected={age === 'any'}
-            onPress={() => setAge('any')}
+          <FilterButton
+            label="7 or Older"
+            selected={agePreference.includes('senior')}
+            onPress={() => toggleAgePreference('senior')}
           />
         </View>
+      </View>
+
+      {/* Size Preference */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Filter By Pet Size Preference</Text>
+        <View style={styles.buttonRow}>
+          <FilterButton
+            label="XS - Small"
+            selected={sizePreference === 'xs_small'}
+            onPress={() => setSizePreference(sizePreference === 'xs_small' ? null : 'xs_small')}
+          />
+          <FilterButton
+            label="Medium"
+            selected={sizePreference === 'medium'}
+            onPress={() => setSizePreference(sizePreference === 'medium' ? null : 'medium')}
+          />
+          <FilterButton
+            label="Large - XL"
+            selected={sizePreference === 'large_xl'}
+            onPress={() => setSizePreference(sizePreference === 'large_xl' ? null : 'large_xl')}
+          />
+        </View>
+      </View>
+
+      {/* Activities */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Filter By Favorite Activities</Text>
+        <View style={styles.activityGrid}>
+          {ACTIVITIES.map(activity => (
+            <FilterButton
+              key={activity}
+              label={activity}
+              selected={activities.includes(activity)}
+              onPress={() => toggleActivity(activity)}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Gender */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Filter By Male/Female Dogs</Text>
+        <View style={styles.buttonRow}>
+          <FilterButton
+            label="Male Dogs"
+            selected={genderPreference === 'male'}
+            onPress={() => setGenderPreference(genderPreference === 'male' ? null : 'male')}
+          />
+          <FilterButton
+            label="Female Dogs"
+            selected={genderPreference === 'female'}
+            onPress={() => setGenderPreference(genderPreference === 'female' ? null : 'female')}
+          />
+        </View>
+      </View>
+
+      {/* Breed Selection */}
+      <View style={styles.section}>
+        <BreedFilter selectedBreeds={selectedBreeds} onBreedsChange={setSelectedBreeds} />
       </View>
 
       <TouchableOpacity
@@ -174,31 +246,23 @@ export default function BuyerPreferencesScreen({ navigation }: any) {
   );
 }
 
-function OptionButton({
+function FilterButton({
   label,
-  sublabel,
   selected,
   onPress,
 }: {
   label: string;
-  sublabel?: string;
   selected: boolean;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity
-      style={[styles.optionButton, selected && styles.optionButtonSelected]}
+      style={[styles.filterButton, selected && styles.filterButtonSelected]}
       onPress={onPress}
     >
-      <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+      <Text style={[styles.filterButtonText, selected && styles.filterButtonTextSelected]}>
         {label}
       </Text>
-      {sublabel && (
-        <Text style={[styles.optionSublabel, selected && styles.optionSublabelSelected]}>
-          {sublabel}
-        </Text>
-      )}
-      {selected && <Text style={styles.checkmark}>✓</Text>}
     </TouchableOpacity>
   );
 }
@@ -220,7 +284,7 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
@@ -231,6 +295,7 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: 20,
+    paddingTop: 0,
   },
   sectionTitle: {
     fontSize: 18,
@@ -238,42 +303,36 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
-  optionGroup: {
+  buttonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
-  optionButton: {
+  activityGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  filterButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
     backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  optionButtonSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.background,
+  filterButtonSelected: {
+    backgroundColor: '#D4EDDA',
+    borderColor: '#28A745',
   },
-  optionLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    flex: 1,
-  },
-  optionLabelSelected: {
-    color: colors.text,
-  },
-  optionSublabel: {
+  filterButtonText: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginRight: 12,
+    fontWeight: '500',
+    color: colors.text,
   },
-  optionSublabelSelected: {
-    color: colors.textSecondary,
-  },
-  checkmark: {
-    fontSize: 20,
-    color: colors.primary,
+  filterButtonTextSelected: {
+    color: '#155724',
+    fontWeight: '600',
   },
   saveButton: {
     backgroundColor: colors.primary,

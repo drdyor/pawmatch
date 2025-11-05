@@ -1,0 +1,3 @@
+[submodule "datasets/dogs"]
+	path = datasets/dogs
+	url = https://github.com/AtharvaTaras/Dog-Breeds-Dataset

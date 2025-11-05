@@ -27,11 +27,6 @@ import BreederAddPetScreen from '../screens/breeder/BreederAddPetScreen';
 import { HeatTrackingScreen } from '../screens/breeder/HeatTrackingScreen';
 import { LogOvulationScreen } from '../screens/breeder/LogOvulationScreen';
 
-// Shelter Screens
-import ShelterHomeScreen from '../screens/shelter/ShelterHomeScreen';
-import ShelterAnimalsScreen from '../screens/shelter/ShelterAnimalsScreen';
-import ShelterListingsScreen from '../screens/shelter/ShelterListingsScreen';
-import ShelterProfileScreen from '../screens/shelter/ShelterProfileScreen';
 
 // Vet Screens
 import VetHomeScreen from '../screens/vet/VetHomeScreen';
@@ -81,22 +76,6 @@ function BreederTabs() {
   );
 }
 
-// Shelter Tabs
-function ShelterTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: '#34C759',
-        tabBarInactiveTintColor: '#6B7280',
-      }}
-    >
-      <Tab.Screen name="Home" component={ShelterHomeScreen} />
-      <Tab.Screen name="Animals" component={ShelterAnimalsScreen} />
-      <Tab.Screen name="Listings" component={ShelterListingsScreen} />
-      <Tab.Screen name="Profile" component={ShelterProfileScreen} />
-    </Tab.Navigator>
-  );
-}
 
 // Vet Tabs
 function VetTabs() {
@@ -144,9 +123,6 @@ export default function AppNavigator({ userRole }: { userRole: string | null }) 
                 <Stack.Screen name="LogOvulation" component={LogOvulationScreen} />
                 <Stack.Screen name="AddPet" component={BreederAddPetScreen} />
               </>
-            )}
-            {userRole === 'shelter' && (
-              <Stack.Screen name="ShelterMain" component={ShelterTabs} />
             )}
             {userRole === 'vet' && (
               <Stack.Screen name="VetMain" component={VetTabs} />

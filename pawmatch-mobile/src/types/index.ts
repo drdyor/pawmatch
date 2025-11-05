@@ -1,5 +1,5 @@
 // User Roles
-export type UserRole = 'breeder_registered' | 'breeder_independent' | 'buyer' | 'shelter' | 'vet';
+export type UserRole = 'breeder_registered' | 'breeder_independent' | 'buyer' | 'vet';
 
 // User Profile
 export interface User {
@@ -11,7 +11,6 @@ export interface User {
   city?: string;
   country: string;
   kennelName?: string;
-  shelterName?: string;
   clinicName?: string;
   isFirstTimeBreeder?: boolean;
   profilePhoto?: string;

@@ -11,6 +11,7 @@ import {
   getCardDeck,
   getUserPremiumStatus,
 } from '../../services/swipeEngine';
+import { POPULAR_CROSS_BREEDS } from '../../utils/dogDataset';
 
 export default function BreederMatchesScreen({ navigation }: any) {
   const [availableStuds, setAvailableStuds] = useState<Pet[]>([]);
@@ -68,9 +69,19 @@ export default function BreederMatchesScreen({ navigation }: any) {
       if (error) throw error;
 
       // Filter studs by breed match if we have females
-      const matchingStuds = studs?.filter(stud => 
-        females.some(female => female.breed === stud.breed)
-      ) || [];
+      // Include same breed + popular cross-breeds (Poodle, Cocker Spaniel, Yorkshire Terrier)
+      const matchingStuds = studs?.filter(stud => {
+        // Same breed match
+        const sameBreed = females.some(female => female.breed === stud.breed);
+        
+        // Popular cross-breed match (if female breed is in popular cross-breeds list)
+        const crossBreedMatch = females.some(female => 
+          POPULAR_CROSS_BREEDS.includes(female.breed) && 
+          POPULAR_CROSS_BREEDS.includes(stud.breed)
+        );
+        
+        return sameBreed || crossBreedMatch;
+      }) || [];
 
       setAvailableStuds(matchingStuds);
     } catch (error) {

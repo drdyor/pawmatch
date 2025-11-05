@@ -28,21 +28,30 @@ export function DiscoverySwiper({ cards, onLike, onPass, onDetail }: DiscoverySw
             <Text style={styles.placeholderEmoji}>{item.pet.species === 'dog' ? '🐕' : '🐈'}</Text>
           </View>
         )}
-      </View>
-      <View style={styles.cardInfo}>
-        <Text style={styles.cardBreed}>{item.pet.breed}</Text>
-        <Text style={styles.cardLocation}>
-          {item.city}, {item.country}
-        </Text>
-        <Text style={styles.cardPrice}>
-          €{(item.price / 100).toFixed(0)}{item.pupsAvailable ? ` · ${item.pupsAvailable} available` : ''}
-        </Text>
-        {item.availableDate && (
-          <Text style={styles.cardDate}>Ready: {new Date(item.availableDate).toLocaleDateString()}</Text>
+        {/* Pet Info Overlay at Bottom-Left */}
+        <View style={styles.infoOverlay}>
+          <View style={styles.infoGradient}>
+            <Text style={styles.petName}>{item.pet.name || 'Unknown'}, {calculateAge(item.pet.date_of_birth)}</Text>
+            <Text style={styles.petBreed}>{item.pet.breed}, {item.pet.sex === 'male' ? 'Male' : 'Female'}</Text>
+          </View>
+        </View>
+        {/* Play Button Overlay (if video available) */}
+        {item.pet.photos && item.pet.photos.length > 1 && (
+          <View style={styles.playButtonOverlay}>
+            <Text style={styles.playButton}>▶</Text>
+          </View>
         )}
       </View>
     </View>
-  )
+  );
+
+  const calculateAge = (dateOfBirth: string): number => {
+    if (!dateOfBirth) return 0;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    const months = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    return Math.floor(months / 12); // return age in years
+  };
 
   const OverlayLabelRight = () => (
     <View style={[styles.overlay, styles.saveOverlay]}>
@@ -105,8 +114,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   cardImageContainer: {
-    height: '65%',
+    height: '100%',
     width: '100%',
+    position: 'relative',
   },
   cardImage: {
     width: '100%',
@@ -122,29 +132,53 @@ const styles = StyleSheet.create({
   placeholderEmoji: {
     fontSize: 80,
   },
+  infoOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+  },
+  infoGradient: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 16,
+    justifyContent: 'flex-end',
+  },
+  petName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  petBreed: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  playButtonOverlay: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginLeft: -30,
+    marginTop: -30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playButton: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    marginLeft: 4,
+  },
   cardInfo: {
     flex: 1,
     padding: 20,
     gap: 6,
     backgroundColor: colors.background,
-  },
-  cardBreed: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#2F3A4A',
-  },
-  cardLocation: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  cardPrice: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-  },
-  cardDate: {
-    fontSize: 14,
-    color: '#6B7280',
   },
   overlay: {
     position: 'absolute',
