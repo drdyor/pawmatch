@@ -3,9 +3,15 @@
  * 
  * Provides utilities for accessing the Dog-Breeds-Dataset submodule.
  * Uses environment variable for easy swapping to AI-generated dataset later.
+ * 
+ * NOTE: For Expo Go, uses hardcoded breed list. Submodule images not accessible in Expo Go.
  */
 
-const IMG_BASE = process.env.EXPO_PUBLIC_DOG_DATASET_PATH || "../datasets/dogs/images/";
+// For Expo Go, we can't access submodule files, so use empty string
+// In production build, this can be set via environment variable
+const IMG_BASE = (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_DOG_DATASET_PATH) 
+  ? process.env.EXPO_PUBLIC_DOG_DATASET_PATH 
+  : ""; // Empty for Expo Go compatibility
 
 export interface BreedMetadata {
   name: string;
@@ -26,6 +32,10 @@ export function getDatasetPath(): string {
  * @param imageIndex - Optional image index (default: 1)
  */
 export function getBreedImage(breedName: string, imageIndex: number = 1): string {
+  if (!IMG_BASE) {
+    // Return empty string for Expo Go - images will use placeholder
+    return "";
+  }
   // Normalize breed name to match folder structure
   const normalizedBreed = breedName.toLowerCase().replace(/\s+/g, '_');
   const imageName = `${normalizedBreed}_${String(imageIndex).padStart(3, '0')}.jpg`;
@@ -34,7 +44,7 @@ export function getBreedImage(breedName: string, imageIndex: number = 1): string
 
 /**
  * Get all available breeds from the dataset
- * This is a placeholder - in production, would read from folder structure or metadata file
+ * This works in Expo Go - uses hardcoded list
  */
 export function getAllBreeds(): string[] {
   // Popular breeds from the dataset
